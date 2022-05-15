@@ -76,9 +76,11 @@
     <Compile Include="Source\Environment\Utils\Gizmo.cs" />
     <Compile Include="Source\Environment\Utils\LineRenderer.cs" />
     <Compile Include="Source\Geometry\Impl\AdaptiveCurve.cs" />
-    <Compile Include="Source\Geometry\Impl\C0Bezier.cs" />
-    <Compile Include="Source\Geometry\Impl\C2InterpolatingSpline.cs" />
-    <Compile Include="Source\Geometry\Impl\C2Spline.cs" />
+    <Compile Include="Source\Geometry\Impl\C0BezierSurface.cs" />
+    <Compile Include="Source\Geometry\Impl\Surface.cs" />
+    <Compile Include="Source\Geometry\Impl\C0BezierCurve.cs" />
+    <Compile Include="Source\Geometry\Impl\C2InterpolatingCurve.cs" />
+    <Compile Include="Source\Geometry\Impl\C2SplineCurve.cs" />
     <Compile Include="Source\Geometry\Impl\CursorLines.cs" />
     <Compile Include="Source\Geometry\Impl\GridLines.cs" />
     <Compile Include="Source\Geometry\Impl\LineSet.cs" />
