@@ -66,6 +66,7 @@
   <ItemGroup />
   <ItemGroup>
     <Compile Include="Source\AppWindow.cs" />
+    <Compile Include="Source\Environment\Elements\BezierSurfaceSceneModel.cs" />
     <Compile Include="Source\Environment\Elements\ControlPointSceneModel.cs" />
     <Compile Include="Source\Environment\Elements\BezierCurveSceneModel.cs" />
     <Compile Include="Source\Environment\Elements\SceneModel.cs" />

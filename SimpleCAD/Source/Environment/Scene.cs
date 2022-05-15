@@ -90,13 +90,18 @@ namespace SimpleCAD.Source.Environment
             complexModels.Add(model);
         }
 
+        public void AddModel(BezierSurfaceSceneModel model)
+        {
+
+        }
+
         public void RemoveModel(BasicSceneModel model)
         {
             if (basicModels.Contains(model))
             {
                 foreach (var complexModel in complexModels)
                 {
-                    complexModel.RemovePoint(model); 
+                    complexModel.RemovePoint(model);
                 }
                 SelectionManager.Instance.Remove(model);
                 basicModels.Remove(model);
@@ -107,6 +112,7 @@ namespace SimpleCAD.Source.Environment
         {
             if (complexModels.Contains(model))
             {
+          
                 SelectionManager.Instance.Remove(model);
                 complexModels.Remove(model);
             }

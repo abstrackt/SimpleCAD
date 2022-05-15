@@ -20,7 +20,6 @@ namespace SimpleCAD.Source.Environment
         public byte[] name = new byte[MAX_NAME_LEN];
 
         public string Name => Encoding.ASCII.GetString(name);
-        public virtual bool IsControlPoint => false;
 
         public SceneModel(IGeometry geometry, string name, PrimitiveType primitives) : base(geometry)
         {

@@ -37,7 +37,11 @@ namespace SimpleCAD.Source
                 stereo = false,
                 gridX = true,
                 gridY = false,
-                gridZ = false
+                gridZ = false,
+                surfWidth = 1f,
+                surfHeight = 1f,
+                nSurfaceU = 1,
+                nSurfaceV = 1
             };
 
             scene.camera.ChangeAspect(Width, Height);
@@ -198,6 +202,11 @@ namespace SimpleCAD.Source
             ImGui.Separator();
         }
 
+        private void DrawSurfacePopup()
+        {
+
+        }
+
         private void DrawScenePanel()
         {
             var scene = Scene.Instance;
@@ -266,6 +275,39 @@ namespace SimpleCAD.Source
                     {
                         scene.AddModel(new BezierCurveSceneModel(new C2InterpolatingSpline(), "Interpolation" + (scene.complexModels.Count + 1)));
                         _uiState.createMenuVisible = false;
+                    }
+
+                    if (ImGui.Button("Surface (C0)", new System.Numerics.Vector2(100, 20)))
+                    {
+                        ImGui.OpenPopup("Surface Creator");
+                    }
+
+                    var open = true;
+
+                    if (ImGui.BeginPopupModal("Surface Creator", ref open, ImGuiWindowFlags.NoResize))
+                    {
+                        
+                        ImGui.DragFloat("Width", ref _uiState.surfWidth, 0.1f, 0.1f, 100);
+                        ImGui.DragFloat("Height", ref _uiState.surfHeight, 0.1f, 0.1f, 100);
+
+                        if (ImGui.InputInt("Segments (u)", ref _uiState.nSurfaceU, 1))
+                        {
+                            _uiState.nSurfaceU = Math.Max(_uiState.nSurfaceU, 1);
+                            _uiState.nSurfaceU = Math.Min(_uiState.nSurfaceU, 8);
+                        }
+                        if (ImGui.InputInt("Segments (v)", ref _uiState.nSurfaceV, 1))
+                        {
+                            _uiState.nSurfaceV = Math.Max(_uiState.nSurfaceV, 1);
+                            _uiState.nSurfaceV = Math.Min(_uiState.nSurfaceV, 8);
+                        }
+
+                        if (ImGui.Button("Accept"))
+                        {
+                            ImGui.CloseCurrentPopup();
+                        }
+
+                        ImGui.SetWindowSize(new System.Numerics.Vector2(300, ImGui.GetContentRegionAvail().Y));
+                        ImGui.EndPopup();
                     }
                 }
 
@@ -627,6 +669,8 @@ namespace SimpleCAD.Source
             public bool ortho;
             public float cameraSpeed;
             public bool gridX, gridY, gridZ;
+            public float surfWidth, surfHeight;
+            public int nSurfaceU, nSurfaceV;
         }
     }
 }

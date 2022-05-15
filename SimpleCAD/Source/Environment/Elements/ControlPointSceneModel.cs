@@ -1,8 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using ImGuiNET;
 using OpenTK;
 using OpenTK.Graphics.OpenGL4;
@@ -14,7 +11,7 @@ namespace SimpleCAD.Source.Environment
 {
     // Represents a model defined by a mesh controlled by external control points.
     // It also modifies render behavior to use tesselation as a default way of drawing geometry.
-    public class ControlPointSceneModel : SceneModel, ISceneGUIElement
+    public abstract class ControlPointSceneModel : SceneModel, ISceneGUIElement
     {
         public List<VirtualPoint> VirtualPoints => new List<VirtualPoint>(_virtualPoints);
 
@@ -90,7 +87,6 @@ namespace SimpleCAD.Source.Environment
                 _geometry.SetControlPoints(positions);
                 RegenMesh();
                 UpdateVirtualPoints(_geometry.GetVirtualPoints());
-                
             }
         }
 
@@ -121,7 +117,6 @@ namespace SimpleCAD.Source.Environment
                 {
                     _controlPoints[i].Translate(changedControlPoints[i]);
                 }
-                
             }
         }
 
@@ -142,6 +137,8 @@ namespace SimpleCAD.Source.Environment
             }
             base.AfterRendering();
         }
+
+        public virtual void OnRemoveModel() { }
 
         protected override bool TryUpdateMeshColor()
         {
@@ -167,8 +164,6 @@ namespace SimpleCAD.Source.Environment
                 element.DrawElementGUI();
             }
 
-            ImGui.Separator();
-
             ImGui.Text("Control Points:");
 
             for (int i = 0; i < _controlPoints.Count; i++)
@@ -178,18 +173,6 @@ namespace SimpleCAD.Source.Environment
                 if (ImGui.Button("Remove##" + i))
                 {
                     RemovePoint(_controlPoints[i]);
-                }
-            }
-
-            if (_virtualPoints.Count > 0)
-            {
-                ImGui.Text("Virtual Points:");
-
-                for (int i = 0; i < _virtualPoints.Count; i++)
-                {
-                    ImGui.Separator();
-                    _virtualPoints[i].DrawElementGUI();
-                    ImGui.Separator();
                 }
             }
 
@@ -213,6 +196,23 @@ namespace SimpleCAD.Source.Environment
                             _controlPointSelectionListVisible = false;
                         }
                     }
+                }
+            }
+            
+
+            ImGui.Separator();
+
+            
+
+            if (_virtualPoints.Count > 0)
+            {
+                ImGui.Text("Virtual Points:");
+
+                for (int i = 0; i < _virtualPoints.Count; i++)
+                {
+                    ImGui.Separator();
+                    _virtualPoints[i].DrawElementGUI();
+                    ImGui.Separator();
                 }
             }
         }

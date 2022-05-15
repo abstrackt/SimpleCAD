@@ -21,7 +21,7 @@ namespace SimpleCAD.Source.Environment
         private Matrix4 _transform;
         private bool _isControlPoint;
 
-        public override bool IsControlPoint => _isControlPoint;
+        public bool IsControlPoint => _isControlPoint;
 
         protected override IGeometry Geometry { get; set; }
 
