@@ -20,16 +20,22 @@ namespace SimpleCAD.Source.Environment
         private Vector3 _scale;
         private Matrix4 _transform;
         private bool _isControlPoint;
+        private bool _deletable;
 
+        // Is a control point for complex geometry
         public bool IsControlPoint => _isControlPoint;
+
+        // Can be deleted via scene methods
+        public bool Deletable => _deletable;
 
         protected override IGeometry Geometry { get; set; }
 
-        public BasicSceneModel(IGeometry geometry, string name, PrimitiveType primitives, bool isControlPoint = false) : base(geometry, name, primitives)
+        public BasicSceneModel(IGeometry geometry, string name, PrimitiveType primitives, bool isControlPoint = false, bool deletable = true) : base(geometry, name, primitives)
         {
             _transform = Matrix4.Identity;
             _scale = Vector3.One;
             _isControlPoint = isControlPoint;
+            _deletable = deletable;
         }
 
         private void RefreshMatrices()

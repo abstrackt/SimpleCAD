@@ -10,14 +10,12 @@ using SimpleCAD.Source.Utils;
 
 namespace SimpleCAD.Source.Geometry
 {
-    public class C2InterpolatingSpline : AdaptiveCurve
+    public class C2InterpolatingCurve : AdaptiveCurve
     {
-        private bool _drawPolygon;
-
         public override int SegmentSize => 4;
         public override int SegmentOffset => 4;
 
-        public C2InterpolatingSpline() : base() { }
+        public C2InterpolatingCurve() : base() { }
 
         private (List<float> alfa, List<float> beta, List<Vector3> b) CreateSystemOfEquations(List<Vector3> points)
         {

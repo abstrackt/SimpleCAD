@@ -14,11 +14,19 @@ namespace SimpleCAD.Source.Environment
     public abstract class ControlPointSceneModel : SceneModel, ISceneGUIElement
     {
         public List<VirtualPoint> VirtualPoints => new List<VirtualPoint>(_virtualPoints);
+        public List<BasicSceneModel> ControlPoints => new List<BasicSceneModel>(_controlPoints);
 
         private List<BasicSceneModel> _controlPoints;
         private List<VirtualPoint> _virtualPoints;
 
         private IControlPointGeometry _geometry;
+
+        private bool _immutable;
+        private bool _removePoints;
+
+        // Control point list cannot be modified
+        public bool Immutable => _immutable;
+        public bool RemovePoints => _removePoints;
 
         protected override IGeometry Geometry {
             get 
@@ -43,33 +51,45 @@ namespace SimpleCAD.Source.Environment
         private bool _controlPointSelectionListVisible;
 
         // Create control point model using currently selected points.
-        public ControlPointSceneModel(IControlPointGeometry geometry, string name, PrimitiveType primitives) : base(geometry, name, primitives)
+        public ControlPointSceneModel(IControlPointGeometry geometry, string name, PrimitiveType primitives, bool immutable = false, bool removePoints = false) : base(geometry, name, primitives)
         {
             _controlPoints = new List<BasicSceneModel>();
             _virtualPoints = new List<VirtualPoint>();
-            AddSelected();
+            _immutable = immutable;
+            _removePoints = removePoints;
         }
 
-        public void AddSelected()
+        public void SetPoints(List<BasicSceneModel> points, bool force = false)
         {
-            foreach (var model in Scene.Instance.basicModels)
+            if (!points.TrueForAll(x => x.IsControlPoint))
+                throw new InvalidOperationException("Cannot use non-control points for control point models");
+
+            if (!Immutable || force)
             {
-                if (SelectionManager.Instance.IsSelected(model))
-                    AddPoint(model);
+                foreach (var model in points)
+                {
+                    _controlPoints.Add(model);
+                }
             }
         }
 
         public void RemovePoint(BasicSceneModel model)
         {
-            if (_controlPoints.Contains(model))
-                _controlPoints.Remove(model);
+            if (!Immutable)
+            {
+                if (_controlPoints.Contains(model))
+                    _controlPoints.Remove(model);
+            }
         }
 
-        public void AddPoint(BasicSceneModel model)
+        public void AddPoint(BasicSceneModel model, bool force = false)
         {
-            if (model.IsControlPoint)
+            if (!Immutable || force)
             {
-                _controlPoints.Add(model);
+                if (model.IsControlPoint)
+                {
+                    _controlPoints.Add(model);
+                }
             }
         }
 
@@ -138,8 +158,6 @@ namespace SimpleCAD.Source.Environment
             base.AfterRendering();
         }
 
-        public virtual void OnRemoveModel() { }
-
         protected override bool TryUpdateMeshColor()
         {
             var colorable = _geometry as IColorable;
@@ -164,46 +182,46 @@ namespace SimpleCAD.Source.Environment
                 element.DrawElementGUI();
             }
 
-            ImGui.Text("Control Points:");
-
-            for (int i = 0; i < _controlPoints.Count; i++)
+            if (!Immutable)
             {
-                ImGui.BulletText(_controlPoints[i].Name);
-                ImGui.SameLine();
-                if (ImGui.Button("Remove##" + i))
+                ImGui.Text("Control Points:");
+
+                for (int i = 0; i < _controlPoints.Count; i++)
                 {
-                    RemovePoint(_controlPoints[i]);
-                }
-            }
-
-            if (ImGui.Button("+", new System.Numerics.Vector2(20, 20)))
-            {
-                _controlPointSelectionListVisible = !_controlPointSelectionListVisible;
-            }
-
-            if (_controlPointSelectionListVisible)
-            {
-                var scene = Scene.Instance;
-
-                for (int i = 0; i < scene.basicModels.Count; i++)
-                {
-                    var model = scene.basicModels[i];
-                    if (model.IsControlPoint && !_controlPoints.Contains(model))
+                    ImGui.BulletText(_controlPoints[i].Name);
+                    ImGui.SameLine();
+                    if (ImGui.Button("Remove##" + i))
                     {
-                        if (ImGui.Button(model.Name, new System.Numerics.Vector2(100, 20)))
+                        RemovePoint(_controlPoints[i]);
+                    }
+                }
+
+                if (ImGui.Button("+", new System.Numerics.Vector2(20, 20)))
+                {
+                    _controlPointSelectionListVisible = !_controlPointSelectionListVisible;
+                }
+
+                if (_controlPointSelectionListVisible)
+                {
+                    var scene = Scene.Instance;
+
+                    for (int i = 0; i < scene.basicModels.Count; i++)
+                    {
+                        var model = scene.basicModels[i];
+                        if (model.IsControlPoint && !_controlPoints.Contains(model))
                         {
-                            _controlPoints.Add(model);
-                            _controlPointSelectionListVisible = false;
+                            if (ImGui.Button(model.Name, new System.Numerics.Vector2(100, 20)))
+                            {
+                                _controlPoints.Add(model);
+                                _controlPointSelectionListVisible = false;
+                            }
                         }
                     }
                 }
             }
-            
 
             ImGui.Separator();
-
             
-
             if (_virtualPoints.Count > 0)
             {
                 ImGui.Text("Virtual Points:");

@@ -40,7 +40,7 @@ namespace SimpleCAD.Source.Environment
         protected override void AfterRendering()
         {
             base.AfterRendering();
-            _lines.RenderLines(_curve.GetPolygons());
+            _lines.RenderLines(_curve.GetLines());
         }
 
         public override void Render()

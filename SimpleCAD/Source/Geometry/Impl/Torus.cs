@@ -92,10 +92,7 @@ namespace SimpleCAD.Source.Geometry
         }
 
         // Return whether the mesh parameters have changed since last GetMesh() call for this geometry.
-        public bool GeometryChanged()
-        {
-            return _changed;
-        }
+        public bool GeometryChanged() => _changed;
 
         public void DrawElementGUI()
         {

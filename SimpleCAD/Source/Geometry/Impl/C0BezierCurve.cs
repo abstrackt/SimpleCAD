@@ -8,16 +8,16 @@ using SimpleCAD.Source.Utils;
 
 namespace SimpleCAD.Source.Geometry
 {
-    public class C0Bezier : AdaptiveCurve, IColorable, ISceneGUIElement
+    public class C0BezierCurve : AdaptiveCurve, IColorable, ISceneGUIElement
     {
         private bool _drawPolygon;
 
         public override int SegmentSize => 4;
         public override int SegmentOffset => 3;
 
-        public C0Bezier() : base() { }
+        public C0BezierCurve() : base() { }
 
-        public override List<Line> GetPolygons()
+        public override List<Line> GetLines()
         {
             var lines = new List<Line>();
 

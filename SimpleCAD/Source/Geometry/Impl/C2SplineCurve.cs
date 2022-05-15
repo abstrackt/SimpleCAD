@@ -8,7 +8,7 @@ using System.Collections.Generic;
 
 namespace SimpleCAD.Source.Geometry
 {
-    public class C2Spline : AdaptiveCurve, ISceneGUIElement
+    public class C2SplineCurve : AdaptiveCurve, ISceneGUIElement
     {
         public override int SegmentSize => 4;
         public override int SegmentOffset => 1;
@@ -16,7 +16,7 @@ namespace SimpleCAD.Source.Geometry
         private List<Vector3> _bezierPoints;
         private bool _drawBezierPolygon, _drawDeBoorPolygon;
 
-        public C2Spline() : base() {
+        public C2SplineCurve() : base() {
             _bezierPoints = new List<Vector3>();
         }
 
@@ -51,12 +51,12 @@ namespace SimpleCAD.Source.Geometry
             return bezierPoints;
         }
 
-        protected override void BeforeMeshRender()
+        protected override void BeforeMeshGeneration()
         {
             _bezierPoints.Clear();
         }
 
-        public override List<Line> GetPolygons()
+        public override List<Line> GetLines()
         {
             var lines = new List<Line>();
 

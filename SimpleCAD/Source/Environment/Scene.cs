@@ -43,8 +43,6 @@ namespace SimpleCAD.Source.Environment
 
         public Camera camera;
 
-        // This should probably be divided into pointModels and complexGeometryModels in the future
-
         public List<BasicSceneModel> basicModels;
         public List<ControlPointSceneModel> complexModels;
         public BasicSceneModel capturedModel;
@@ -85,19 +83,47 @@ namespace SimpleCAD.Source.Environment
             basicModels.Add(model);
         }
 
-        public void AddModel(ControlPointSceneModel model)
+        public void AddModel(BezierCurveSceneModel model)
         {
+            model.SetPoints(SelectionManager.Instance.SelectedControlPoints);
             complexModels.Add(model);
         }
 
-        public void AddModel(BezierSurfaceSceneModel model)
+        // Custom behavior since we need to add points along with the model.
+        public void AddModel(BezierSurfaceSceneModel model, float width, float height)
         {
+            // Add non-deletable points along with the surface
 
+            List<BasicSceneModel> points = new List<BasicSceneModel>();
+
+            for (int u = 0; u < model.PointsU; u++)
+            {
+                for (int v = 0; v < model.PointsV; v++)
+                {
+                    // Non deletable control point
+                    var point = new BasicSceneModel(
+                        new Point(ColorPalette.DeselectedColor), 
+                        model.Name + "Point [" + u + "," + v + "]", 
+                        PrimitiveType.Points, true, false);
+
+                    var translationX = (u - model.PointsU / 2f) * width / (float)model.PointsU;
+                    var translationZ = (v - model.PointsV / 2f) * height / (float)model.PointsV;
+
+                    point.Translate(cursorPos);
+                    point.Translate(new Vector3(translationX, 0, translationZ), true);
+                    points.Add(point);
+
+                    basicModels.Add(point);
+                }
+            }
+
+            model.SetPoints(points, true);
+            complexModels.Add(model);
         }
 
         public void RemoveModel(BasicSceneModel model)
         {
-            if (basicModels.Contains(model))
+            if (model.Deletable && basicModels.Contains(model))
             {
                 foreach (var complexModel in complexModels)
                 {
@@ -112,7 +138,14 @@ namespace SimpleCAD.Source.Environment
         {
             if (complexModels.Contains(model))
             {
-          
+                if (model.RemovePoints)
+                {
+                    foreach (var point in model.ControlPoints)
+                    {
+                        RemoveModel(point);
+                    }
+                }
+
                 SelectionManager.Instance.Remove(model);
                 complexModels.Remove(model);
             }

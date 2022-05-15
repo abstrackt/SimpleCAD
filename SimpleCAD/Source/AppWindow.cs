@@ -141,31 +141,33 @@ namespace SimpleCAD.Source
             var scene = Scene.Instance;
             var selection = SelectionManager.Instance;
 
-            if (ImGui.Button("Delete##" + index))
+            if (model.Deletable)
             {
-                scene.RemoveModel(model);
+                if (ImGui.Button("Delete##" + index))
+                {
+                    scene.RemoveModel(model);
+                }
+                ImGui.SameLine();
+            }
+            
+            if (!selection.IsSelected(model))
+            {
+                if (ImGui.Button("Select##" + index))
+                {
+                    selection.Add(model);
+                }
             }
             else
             {
-                ImGui.SameLine();
-                if (!selection.IsSelected(model))
+                if (ImGui.Button("Deselect##" + index))
                 {
-                    if (ImGui.Button("Select##" + index))
-                    {
-                        selection.Add(model);
-                    }
+                    selection.Remove(model);
                 }
-                else
-                {
-                    if (ImGui.Button("Deselect##" + index))
-                    {
-                        selection.Remove(model);
-                    }
-                }
-
-                ImGui.SameLine();
-                ImGui.InputText("Scene Model##" + index, model.name, SceneModel.MAX_NAME_LEN);
             }
+
+            ImGui.SameLine();
+            ImGui.InputText("##Scene Model" + index, model.name, SceneModel.MAX_NAME_LEN);
+            
             ImGui.Separator();
         }
 
@@ -212,7 +214,11 @@ namespace SimpleCAD.Source
             var scene = Scene.Instance;
             var selection = SelectionManager.Instance;
              
-            if (ImGui.Begin("Scene", ImGuiWindowFlags.AlwaysVerticalScrollbar | ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoMove | ImGuiWindowFlags.NoCollapse))
+            if (ImGui.Begin("Scene", 
+                ImGuiWindowFlags.AlwaysVerticalScrollbar | 
+                ImGuiWindowFlags.NoResize | 
+                ImGuiWindowFlags.NoMove | 
+                ImGuiWindowFlags.NoCollapse))
             {
                 ImGui.SetWindowSize(new System.Numerics.Vector2(300, Height / 3));
                 ImGui.SetWindowPos(new System.Numerics.Vector2(Width - 300, 18));
@@ -236,7 +242,10 @@ namespace SimpleCAD.Source
                 {
                     if (ImGui.Button("Point", new System.Numerics.Vector2(100, 20)))
                     {
-                        var point = new BasicSceneModel(new Point(ColorPalette.DeselectedColor), "Point " + (scene.basicModels.Count + 1), PrimitiveType.Points, true);
+                        var point = new BasicSceneModel(
+                            new Point(ColorPalette.DeselectedColor), 
+                            "Point " + (scene.basicModels.Count + 1), 
+                            PrimitiveType.Points, true);
                         scene.AddModel(point);
                         _uiState.createMenuVisible = false;
                         if (selection.ControlPointModelSelected &&
@@ -249,31 +258,43 @@ namespace SimpleCAD.Source
 
                     if (ImGui.Button("Torus", new System.Numerics.Vector2(100, 20)))
                     {
-                        scene.AddModel(new BasicSceneModel(new Torus(40, 2, 1, ColorPalette.DeselectedColor), "Torus " + (scene.basicModels.Count + 1), PrimitiveType.Lines));
+                        scene.AddModel(new BasicSceneModel(
+                            new Torus(40, 2, 1, ColorPalette.DeselectedColor), 
+                            "Torus " + (scene.basicModels.Count + 1), 
+                            PrimitiveType.Lines));
                         _uiState.createMenuVisible = false;
                     }
 
                     if (ImGui.Button("Quad", new System.Numerics.Vector2(100, 20)))
                     {
-                        scene.AddModel(new BasicSceneModel(new Quad(ColorPalette.DeselectedColor), "Quad " + (scene.basicModels.Count + 1), PrimitiveType.Triangles));
+                        scene.AddModel(new BasicSceneModel(
+                            new Quad(ColorPalette.DeselectedColor), 
+                            "Quad " + (scene.basicModels.Count + 1), 
+                            PrimitiveType.Triangles));
                         _uiState.createMenuVisible = false;
                     }
 
-                    if (selection.SelectedControlPoints > 0 && ImGui.Button("Bezier (C0)", new System.Numerics.Vector2(100, 20)))
+                    if (selection.SelectedControlPoints.Count > 0 && ImGui.Button("Bezier (C0)", new System.Numerics.Vector2(100, 20)))
                     {
-                        scene.AddModel(new BezierCurveSceneModel(new C0Bezier(), "C0 Bezier " + (scene.complexModels.Count + 1)));
+                        scene.AddModel(new BezierCurveSceneModel(
+                            new C0BezierCurve(), 
+                            "C0 Bezier " + (scene.complexModels.Count + 1)));
                         _uiState.createMenuVisible = false;
                     }
 
-                    if (selection.SelectedControlPoints > 3 && ImGui.Button("Spline (C2)", new System.Numerics.Vector2(100, 20)))
+                    if (selection.SelectedControlPoints.Count > 3 && ImGui.Button("Spline (C2)", new System.Numerics.Vector2(100, 20)))
                     {
-                        scene.AddModel(new BezierCurveSceneModel(new C2Spline(), "C2 Spline " + (scene.complexModels.Count + 1)));
+                        scene.AddModel(new BezierCurveSceneModel(
+                            new C2SplineCurve(), 
+                            "C2 Spline " + (scene.complexModels.Count + 1)));
                         _uiState.createMenuVisible = false;
                     }
 
-                    if (selection.SelectedControlPoints > 0 && ImGui.Button("Interpol. (C2)", new System.Numerics.Vector2(100, 20)))
+                    if (selection.SelectedControlPoints.Count > 0 && ImGui.Button("Interpol. (C2)", new System.Numerics.Vector2(100, 20)))
                     {
-                        scene.AddModel(new BezierCurveSceneModel(new C2InterpolatingSpline(), "Interpolation" + (scene.complexModels.Count + 1)));
+                        scene.AddModel(new BezierCurveSceneModel(
+                            new C2InterpolatingCurve(), 
+                            "Interpolation" + (scene.complexModels.Count + 1)));
                         _uiState.createMenuVisible = false;
                     }
 
@@ -286,7 +307,6 @@ namespace SimpleCAD.Source
 
                     if (ImGui.BeginPopupModal("Surface Creator", ref open, ImGuiWindowFlags.NoResize))
                     {
-                        
                         ImGui.DragFloat("Width", ref _uiState.surfWidth, 0.1f, 0.1f, 100);
                         ImGui.DragFloat("Height", ref _uiState.surfHeight, 0.1f, 0.1f, 100);
 
@@ -304,6 +324,9 @@ namespace SimpleCAD.Source
                         if (ImGui.Button("Accept"))
                         {
                             ImGui.CloseCurrentPopup();
+                            scene.AddModel(new BezierSurfaceSceneModel(new C0BezierSurface(_uiState.nSurfaceU, _uiState.nSurfaceV),
+                                "Surface" + (scene.complexModels.Count + 1)), 
+                                _uiState.surfWidth, _uiState.surfHeight);
                         }
 
                         ImGui.SetWindowSize(new System.Numerics.Vector2(300, ImGui.GetContentRegionAvail().Y));
@@ -319,7 +342,10 @@ namespace SimpleCAD.Source
         {
             var scene = Scene.Instance;
 
-            if (ImGui.Begin("Cursor", ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoMove | ImGuiWindowFlags.NoCollapse))
+            if (ImGui.Begin("Cursor", 
+                ImGuiWindowFlags.NoResize | 
+                ImGuiWindowFlags.NoMove | 
+                ImGuiWindowFlags.NoCollapse))
             {
                 ImGui.SetWindowSize(new System.Numerics.Vector2(300, Height / 9));
                 ImGui.SetWindowPos(new System.Numerics.Vector2(Width - 300, 18 + Height / 3));
@@ -339,7 +365,11 @@ namespace SimpleCAD.Source
             var scene = Scene.Instance;
             var selection = SelectionManager.Instance;
 
-            if (ImGui.Begin("Inspector", ImGuiWindowFlags.AlwaysVerticalScrollbar | ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoMove | ImGuiWindowFlags.NoCollapse))
+            if (ImGui.Begin("Inspector", 
+                ImGuiWindowFlags.AlwaysVerticalScrollbar | 
+                ImGuiWindowFlags.NoResize | 
+                ImGuiWindowFlags.NoMove | 
+                ImGuiWindowFlags.NoCollapse))
             {
                 ImGui.SetWindowSize(new System.Numerics.Vector2(300, 5 * Height / 9 - 18));
                 ImGui.SetWindowPos(new System.Numerics.Vector2(Width - 300, 18 + 4 * Height / 9));

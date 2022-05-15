@@ -30,7 +30,7 @@ namespace SimpleCAD.Source.Utils
 
         public Vector3 Midpoint => _originalPivot + _currentPos;
         public bool Selected => _selectedModels.Count > 0;
-        public int SelectedControlPoints => _selectedModels.Count(x => x.IsControlPoint);
+        public List<BasicSceneModel> SelectedControlPoints => _selectedModels.Where(x => x.IsControlPoint).ToList();
         public bool ControlPointModelSelected => _selectedControlPointModel != null;
         public int Count => _selectedModels.Count;
         

@@ -12,11 +12,7 @@ namespace SimpleCAD.Source.Geometry
     {
         protected Color4 color;
         protected List<Vector3> controlPoints;
-        protected Matrix4 proj, view;
-        protected Vector2 viewport;
-
         protected List<Vertex> vertexCache;
-        protected List<uint> indexCache;
 
         public abstract int SegmentSize { get; }
         public abstract int SegmentOffset { get; }
@@ -27,7 +23,6 @@ namespace SimpleCAD.Source.Geometry
         {
             controlPoints = new List<Vector3>();
             vertexCache = new List<Vertex>();
-            indexCache = new List<uint>();
         }
 
         public void SetControlPoints(List<Vector3> positions)
@@ -35,9 +30,9 @@ namespace SimpleCAD.Source.Geometry
             controlPoints = new List<Vector3>(positions);
         }
 
-        public virtual List<Line> GetPolygons() { return new List<Line>(); }
+        public virtual List<Line> GetLines() { return new List<Line>(); }
 
-        protected virtual void BeforeMeshRender() { }
+        protected virtual void BeforeMeshGeneration() { }
 
         protected virtual List<Vector3> ProcessControlPoints(List<Vector3> points) 
         { 
@@ -97,7 +92,6 @@ namespace SimpleCAD.Source.Geometry
         private void GenerateSegments(List<Vector3> points)
         {
             vertexCache.Clear();
-            indexCache.Clear();
 
             int currentPoint = 0;
 
@@ -128,14 +122,14 @@ namespace SimpleCAD.Source.Geometry
 
         public virtual (Vertex[] vertices, uint[] indices) GetMesh()
         {
-            BeforeMeshRender();
+            BeforeMeshGeneration();
                 
             // Generate bezier points
             var points = ProcessControlPoints(controlPoints);
 
             GenerateSegments(points);
 
-            return (vertexCache.ToArray(), indexCache.ToArray());
+            return (vertexCache.ToArray(), new uint[] { });
         }
 
         public virtual List<Vector3> GetVirtualPoints()

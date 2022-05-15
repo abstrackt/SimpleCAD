@@ -19,7 +19,7 @@ namespace SimpleCAD.Source.Environment
 
         public byte[] name = new byte[MAX_NAME_LEN];
 
-        public string Name => Encoding.ASCII.GetString(name);
+        public string Name => Encoding.ASCII.GetString(name).Trim('\0');
 
         public SceneModel(IGeometry geometry, string name, PrimitiveType primitives) : base(geometry)
         {
