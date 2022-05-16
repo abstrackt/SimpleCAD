@@ -109,16 +109,20 @@
     <Compile Include="Source\Utils\Shader.cs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="Source\Shaders\bezier.frag" />
-    <None Include="Source\Shaders\bezier.tesc">
+    <None Include="Source\Shaders\bezierCurve.frag" />
+    <None Include="Source\Shaders\bezierCurve.tesc">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <Content Include="Source\Shaders\bezier.tese">
+    <Content Include="Source\Shaders\bezierCurve.tese">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Include="Source\Shaders\bezier.vert">
+    <Content Include="Source\Shaders\bezierCurve.vert">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
+    <None Include="Source\Shaders\bezierSurface.frag" />
+    <None Include="Source\Shaders\bezierSurface.tesc" />
+    <None Include="Source\Shaders\bezierSurface.tese" />
+    <None Include="Source\Shaders\bezierSurface.vert" />
     <None Include="Source\Shaders\gridShader.vert">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
@@ -136,10 +140,14 @@
     <PostBuildEvent>xcopy /y $(ProjectDir)Source\Shaders\shader.vert  $(ProjectDir)$(OutDir)
 xcopy /y $(ProjectDir)Source\Shaders\shader.frag  $(ProjectDir)$(OutDir)
 xcopy /y $(ProjectDir)Source\Shaders\gridShader.vert  $(ProjectDir)$(OutDir)
-xcopy /y $(ProjectDir)Source\Shaders\bezier.vert  $(ProjectDir)$(OutDir)
-xcopy /y $(ProjectDir)Source\Shaders\bezier.frag  $(ProjectDir)$(OutDir)
-xcopy /y $(ProjectDir)Source\Shaders\bezier.tesc  $(ProjectDir)$(OutDir)
-xcopy /y $(ProjectDir)Source\Shaders\bezier.tese  $(ProjectDir)$(OutDir)</PostBuildEvent>
+xcopy /y $(ProjectDir)Source\Shaders\bezierCurve.vert  $(ProjectDir)$(OutDir)
+xcopy /y $(ProjectDir)Source\Shaders\bezierCurve.frag  $(ProjectDir)$(OutDir)
+xcopy /y $(ProjectDir)Source\Shaders\bezierCurve.tesc  $(ProjectDir)$(OutDir)
+xcopy /y $(ProjectDir)Source\Shaders\bezierCurve.tese  $(ProjectDir)$(OutDir)
+xcopy /y $(ProjectDir)Source\Shaders\bezierSurface.vert  $(ProjectDir)$(OutDir)
+xcopy /y $(ProjectDir)Source\Shaders\bezierSurface.frag  $(ProjectDir)$(OutDir)
+xcopy /y $(ProjectDir)Source\Shaders\bezierSurface.tesc  $(ProjectDir)$(OutDir)
+xcopy /y $(ProjectDir)Source\Shaders\bezierSurface.tese  $(ProjectDir)$(OutDir)</PostBuildEvent>
   </PropertyGroup>
   <Import Project="packages\ImGui.NET.1.78.0\build\net40\ImGui.NET.targets" Condition="Exists('packages\ImGui.NET.1.78.0\build\net40\ImGui.NET.targets')" />
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">

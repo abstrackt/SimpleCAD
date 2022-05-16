@@ -100,14 +100,14 @@ namespace SimpleCAD.Source.Environment
             {
                 for (int v = 0; v < model.PointsV; v++)
                 {
-                    // Non deletable control point
+                    // Non-deletable control point
                     var point = new BasicSceneModel(
                         new Point(ColorPalette.DeselectedColor), 
-                        model.Name + "Point [" + u + "," + v + "]", 
+                        model.Name + " Point [" + u + "," + v + "]", 
                         PrimitiveType.Points, true, false);
 
-                    var translationX = (u - model.PointsU / 2f) * width / (float)model.PointsU;
-                    var translationZ = (v - model.PointsV / 2f) * height / (float)model.PointsV;
+                    var translationX = u * width / ((float)model.PointsU - 1) - width / 2f;
+                    var translationZ = v * height / ((float)model.PointsV - 1) - height / 2f;
 
                     point.Translate(cursorPos);
                     point.Translate(new Vector3(translationX, 0, translationZ), true);
@@ -121,9 +121,9 @@ namespace SimpleCAD.Source.Environment
             complexModels.Add(model);
         }
 
-        public void RemoveModel(BasicSceneModel model)
+        public void RemoveModel(BasicSceneModel model, bool force = false)
         {
-            if (model.Deletable && basicModels.Contains(model))
+            if ((model.Deletable || force) && basicModels.Contains(model))
             {
                 foreach (var complexModel in complexModels)
                 {
@@ -142,7 +142,7 @@ namespace SimpleCAD.Source.Environment
                 {
                     foreach (var point in model.ControlPoints)
                     {
-                        RemoveModel(point);
+                        RemoveModel(point, true);
                     }
                 }
 

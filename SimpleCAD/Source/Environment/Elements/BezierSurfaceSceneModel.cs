@@ -11,8 +11,8 @@ namespace SimpleCAD.Source.Environment
         private Surface _surface;
 
         // For model generation
-        public int PointsU => _surface.PatchSize + (_surface.PatchOffset) * (_surface.PatchesU - 1);
-        public int PointsV => _surface.PatchSize + (_surface.PatchOffset) * (_surface.PatchesV - 1);
+        public int PointsU => _surface.PointsU;
+        public int PointsV => _surface.PointsV;
         
         protected override IGeometry Geometry
         {
@@ -36,9 +36,9 @@ namespace SimpleCAD.Source.Environment
         {
             _lines = new LineRenderer();
 
-            SetVertShader("bezier.vert");
-            SetFragShader("bezier.frag");
-            SetTesselationShader("bezier.tesc", "bezier.tese");
+            SetVertShader("bezierSurface.vert");
+            SetFragShader("bezierSurface.frag");
+            SetTesselationShader("bezierSurface.tesc", "bezierSurface.tese");
         }
 
         protected override void AfterRendering()
@@ -47,9 +47,16 @@ namespace SimpleCAD.Source.Environment
             _lines.RenderLines(_surface.GetLines());
         }
 
+        public void SetTesselationLevels(int u, int v)
+        {
+            shader.SetInt("tess_u", u);
+            shader.SetInt("tess_v", v);
+        }
+
         public override void Render()
         {
             base.BeforeRendering();
+            SetTesselationLevels(_surface.TesselationLevel.u, _surface.TesselationLevel.v);
             shader.Use();
             GL.BindVertexArray(_vertexArray);
             GL.PatchParameter(PatchParameterInt.PatchVertices, _surface.PatchSize * _surface.PatchSize);

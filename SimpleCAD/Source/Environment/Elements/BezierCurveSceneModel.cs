@@ -32,9 +32,9 @@ namespace SimpleCAD.Source.Environment
         {
             _lines = new LineRenderer();
 
-            SetVertShader("bezier.vert");
-            SetFragShader("bezier.frag");
-            SetTesselationShader("bezier.tesc", "bezier.tese");
+            SetVertShader("bezierCurve.vert");
+            SetFragShader("bezierCurve.frag");
+            SetTesselationShader("bezierCurve.tesc", "bezierCurve.tese");
         }
 
         protected override void AfterRendering()

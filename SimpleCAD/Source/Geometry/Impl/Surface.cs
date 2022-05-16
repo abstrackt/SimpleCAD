@@ -16,8 +16,13 @@ namespace SimpleCAD.Source.Geometry
         public int PatchesU => patchesU;
         public int PatchesV => patchesV;
 
+        public int PointsU => PatchSize + (PatchOffset) * (PatchesU - 1);
+        public int PointsV => PatchSize + (PatchOffset) * (PatchesV - 1);
+
         public abstract int PatchSize { get; }
         public abstract int PatchOffset { get; }
+
+        public abstract (int u, int v) TesselationLevel { get; }
 
         public bool GeometryChanged() => true;
 
@@ -30,9 +35,7 @@ namespace SimpleCAD.Source.Geometry
 
             this.patchesU = patchesU;
             this.patchesV = patchesV;
-            controlPoints = new Vector3[
-                PatchSize + PatchOffset * (patchesU - 1), 
-                PatchSize + PatchOffset * (patchesV - 1)];
+            controlPoints = new Vector3[PointsU, PointsV];
             vertexCache = new List<Vertex>();
         }
 
@@ -41,11 +44,11 @@ namespace SimpleCAD.Source.Geometry
             if (positions.Count != controlPoints.Length)
                 return;
 
-            for (int x = 0; x < patchesU; x++)
+            for (int x = 0; x < PointsU; x++)
             {
-                for (int y = 0; y < patchesV; y++)
+                for (int y = 0; y < PointsV; y++)
                 {
-                    controlPoints[x, y] = positions[y * patchesU + x]; 
+                    controlPoints[x, y] = positions[y * PointsU + x]; 
                 }
             }
         }
@@ -66,9 +69,9 @@ namespace SimpleCAD.Source.Geometry
 
             int currentX = 0, currentY = 0;
 
-            while(currentX + PatchSize < points.GetLength(0))
+            while(currentX + PatchSize <= points.GetLength(0))
             {
-                while (currentY + PatchSize < points.GetLength(1))
+                while (currentY + PatchSize <= points.GetLength(1))
                 {
                     for (int x = currentX; x < currentX + PatchSize; x++)
                     {

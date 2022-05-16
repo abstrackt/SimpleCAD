@@ -166,7 +166,7 @@ namespace SimpleCAD.Source
             }
 
             ImGui.SameLine();
-            ImGui.InputText("##Scene Model" + index, model.name, SceneModel.MAX_NAME_LEN);
+            ImGui.InputText("##SceneModel" + index, model.name, SceneModel.MAX_NAME_LEN);
             
             ImGui.Separator();
         }
@@ -197,9 +197,8 @@ namespace SimpleCAD.Source
                         selection.Remove(model);
                     }
                 }
-
                 ImGui.SameLine();
-                ImGui.InputText("Scene Model##" + index, model.name, SceneModel.MAX_NAME_LEN);
+                ImGui.InputText("##SceneModel" + index, model.name, SceneModel.MAX_NAME_LEN);
             }
             ImGui.Separator();
         }
@@ -223,9 +222,14 @@ namespace SimpleCAD.Source
                 ImGui.SetWindowSize(new System.Numerics.Vector2(300, Height / 3));
                 ImGui.SetWindowPos(new System.Numerics.Vector2(Width - 300, 18));
 
+                ImGui.Checkbox("Show control points", ref _uiState.showControlPoints);
+
+                ImGui.Separator();
+
                 for (int i = 0; i < scene.basicModels.Count; i++)
                 {
-                    DrawBasicModelGUI(scene.basicModels[i], i);
+                    if (!scene.basicModels[i].IsControlPoint || _uiState.showControlPoints)
+                        DrawBasicModelGUI(scene.basicModels[i], i);
                 }
 
                 for (int i = 0; i < scene.complexModels.Count; i++)
@@ -327,6 +331,7 @@ namespace SimpleCAD.Source
                             scene.AddModel(new BezierSurfaceSceneModel(new C0BezierSurface(_uiState.nSurfaceU, _uiState.nSurfaceV),
                                 "Surface" + (scene.complexModels.Count + 1)), 
                                 _uiState.surfWidth, _uiState.surfHeight);
+                            _uiState.createMenuVisible = false;
                         }
 
                         ImGui.SetWindowSize(new System.Numerics.Vector2(300, ImGui.GetContentRegionAvail().Y));
@@ -701,6 +706,7 @@ namespace SimpleCAD.Source
             public bool gridX, gridY, gridZ;
             public float surfWidth, surfHeight;
             public int nSurfaceU, nSurfaceV;
+            public bool showControlPoints;
         }
     }
 }

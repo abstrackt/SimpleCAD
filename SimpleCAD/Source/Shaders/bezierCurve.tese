@@ -9,6 +9,7 @@ out vec4 tese_color;
 
 void main() {
     float u = gl_TessCoord.x;
+	float v = gl_TessCoord.y;
 
     float B0 = (1.-u)*(1.-u)*(1.-u);
     float B1 = 3.*u*(1.-u)*(1.-u);

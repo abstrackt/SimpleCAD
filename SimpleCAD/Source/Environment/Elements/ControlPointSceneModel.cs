@@ -182,20 +182,23 @@ namespace SimpleCAD.Source.Environment
                 element.DrawElementGUI();
             }
 
-            if (!Immutable)
-            {
-                ImGui.Text("Control Points:");
+            ImGui.Text("Control Points:");
 
-                for (int i = 0; i < _controlPoints.Count; i++)
+            for (int i = 0; i < _controlPoints.Count; i++)
+            {
+                ImGui.BulletText(_controlPoints[i].Name);
+                if (!Immutable)
                 {
-                    ImGui.BulletText(_controlPoints[i].Name);
                     ImGui.SameLine();
                     if (ImGui.Button("Remove##" + i))
                     {
                         RemovePoint(_controlPoints[i]);
                     }
                 }
+            }
 
+            if (!Immutable)
+            {
                 if (ImGui.Button("+", new System.Numerics.Vector2(20, 20)))
                 {
                     _controlPointSelectionListVisible = !_controlPointSelectionListVisible;
@@ -219,11 +222,10 @@ namespace SimpleCAD.Source.Environment
                     }
                 }
             }
-
-            ImGui.Separator();
             
             if (_virtualPoints.Count > 0)
             {
+                ImGui.Separator();
                 ImGui.Text("Virtual Points:");
 
                 for (int i = 0; i < _virtualPoints.Count; i++)
