@@ -10,7 +10,7 @@ namespace SimpleCAD.Source
     {
         static void Main(string[] args)
         {
-            using (AppWindow app = new AppWindow(800, 600, "SimpleCAD"))
+            using (AppWindow app = new AppWindow(1280, 720, "SimpleCAD"))
             {
                 app.Run(60.0);
             }

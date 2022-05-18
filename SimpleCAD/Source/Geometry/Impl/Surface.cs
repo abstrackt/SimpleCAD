@@ -12,43 +12,49 @@ namespace SimpleCAD.Source.Geometry
         protected Vector3[,] controlPoints;
         protected List<Vertex> vertexCache;
         protected int patchesU, patchesV;
+        protected readonly bool wrapU, wrapV;
 
         public int PatchesU => patchesU;
         public int PatchesV => patchesV;
 
-        public int PointsU => PatchSize + (PatchOffset) * (PatchesU - 1);
-        public int PointsV => PatchSize + (PatchOffset) * (PatchesV - 1);
+        public int PointsU => PatchSize + (PatchOffset) * (PatchesU - 1) - (TopologyWrap.u ? 1 : 0);
+        public int PointsV => PatchSize + (PatchOffset) * (PatchesV - 1) - (TopologyWrap.v ? 1 : 0);
 
         public abstract int PatchSize { get; }
         public abstract int PatchOffset { get; }
 
         public abstract (int u, int v) TesselationLevel { get; }
+        public (bool u, bool v) TopologyWrap => (wrapU, wrapV);
 
         public bool GeometryChanged() => true;
 
-        public Surface(int patchesU, int patchesV)
+        public Surface(int patchesU, int patchesV, bool wrapU = false, bool wrapV = false)
         {
             if (patchesU < 1 || patchesV < 1)
             {
                 throw new InvalidOperationException("Cannot create surface of width or height 0");
             }
 
+            this.wrapU = wrapU;
+            this.wrapV = wrapV;
             this.patchesU = patchesU;
             this.patchesV = patchesV;
             controlPoints = new Vector3[PointsU, PointsV];
             vertexCache = new List<Vertex>();
         }
 
+        public abstract List<Vector3> GenerateControlPoints(float mU, float mV);
+
         public void SetControlPoints(List<Vector3> positions)
         {
             if (positions.Count != controlPoints.Length)
                 return;
 
-            for (int x = 0; x < PointsU; x++)
+            for (int u = 0; u < PointsU; u++)
             {
-                for (int y = 0; y < PointsV; y++)
+                for (int v = 0; v < PointsV; v++)
                 {
-                    controlPoints[x, y] = positions[y * PointsU + x]; 
+                    controlPoints[u, v] = positions[u * PointsV + v]; 
                 }
             }
         }
@@ -67,25 +73,27 @@ namespace SimpleCAD.Source.Geometry
         {
             vertexCache.Clear();
 
-            int currentX = 0, currentY = 0;
+            int currentU = 0, currentV = 0;
 
-            while(currentX + PatchSize <= points.GetLength(0))
+            while(currentU + PatchSize <= (PointsU + (TopologyWrap.u ? 1 : 0)))
             {
-                while (currentY + PatchSize <= points.GetLength(1))
+                while (currentV + PatchSize <= (PointsV + (TopologyWrap.v ? 1 : 0)))
                 {
-                    for (int x = currentX; x < currentX + PatchSize; x++)
+                    for (int u = currentU; u < currentU + PatchSize; u++)
                     {
-                        for (int y = currentY; y < currentY + PatchSize; y++)
+                        for (int v = currentV; v < currentV + PatchSize; v++)
                         {
-                            vertexCache.Add(new Vertex(points[x, y], color));
+                            var uWrap = u % PointsU;
+                            var vWrap = v % PointsV;
+                            vertexCache.Add(new Vertex(points[uWrap, vWrap], color));
                         }
                     }
 
-                    currentY += PatchOffset;
+                    currentV += PatchOffset;
                 }
 
-                currentX += PatchOffset;
-                currentY = 0;
+                currentV = 0;
+                currentU += PatchOffset;
             }
         }
 

@@ -26,7 +26,7 @@ namespace SimpleCAD.Source.Selection
             }
         }
 
-        private const float SELECTION_RADIUS = 0.1f;
+        private const float SELECTION_RADIUS = 0.2f;
 
         public Vector3 Raycast(Vector2 mouse, Vector2 viewportSize)
         {
@@ -115,7 +115,7 @@ namespace SimpleCAD.Source.Selection
 
             float d = (float)Math.Sqrt((L.Length * L.Length) - (tc * tc));
 
-            return d < SELECTION_RADIUS * Math.Sqrt(distance);
+            return d < SELECTION_RADIUS;
         }
     }
 }

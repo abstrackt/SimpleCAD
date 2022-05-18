@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using OpenTK;
 using OpenTK.Graphics.OpenGL4;
 using SimpleCAD.Source.Geometry;
 
@@ -9,10 +10,6 @@ namespace SimpleCAD.Source.Environment
     {
         private LineRenderer _lines;
         private Surface _surface;
-
-        // For model generation
-        public int PointsU => _surface.PointsU;
-        public int PointsV => _surface.PointsV;
         
         protected override IGeometry Geometry
         {
@@ -45,6 +42,11 @@ namespace SimpleCAD.Source.Environment
         {
             base.AfterRendering();
             _lines.RenderLines(_surface.GetLines());
+        }
+
+        public List<Vector3> GenerateControlPoints(float mU, float mV)
+        {
+            return _surface.GenerateControlPoints(mU, mV);
         }
 
         public void SetTesselationLevels(int u, int v)

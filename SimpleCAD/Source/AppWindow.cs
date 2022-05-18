@@ -38,8 +38,10 @@ namespace SimpleCAD.Source
                 gridX = true,
                 gridY = false,
                 gridZ = false,
-                surfWidth = 1f,
-                surfHeight = 1f,
+                surfWidth = 5f,
+                surfHeight = 5f,
+                cylinderHeight = 5f,
+                cylinderRadius = 1.5f,
                 nSurfaceU = 1,
                 nSurfaceV = 1
             };
@@ -203,11 +205,6 @@ namespace SimpleCAD.Source
             ImGui.Separator();
         }
 
-        private void DrawSurfacePopup()
-        {
-
-        }
-
         private void DrawScenePanel()
         {
             var scene = Scene.Instance;
@@ -311,30 +308,66 @@ namespace SimpleCAD.Source
 
                     if (ImGui.BeginPopupModal("Surface Creator", ref open, ImGuiWindowFlags.NoResize))
                     {
-                        ImGui.DragFloat("Width", ref _uiState.surfWidth, 0.1f, 0.1f, 100);
-                        ImGui.DragFloat("Height", ref _uiState.surfHeight, 0.1f, 0.1f, 100);
+                        ImGui.Text("Surface wrap mode");
+                        if (ImGui.RadioButton("Wrap", _uiState.cylinder))
+                        {
+                            _uiState.cylinder = true;
+                        }
+                        ImGui.SameLine();
+                        if (ImGui.RadioButton("Flat", !_uiState.cylinder))
+                        {
+                            _uiState.cylinder = false;
+                        }
 
-                        if (ImGui.InputInt("Segments (u)", ref _uiState.nSurfaceU, 1))
+                        ImGui.Separator();
+
+                        if (!_uiState.cylinder)
                         {
-                            _uiState.nSurfaceU = Math.Max(_uiState.nSurfaceU, 1);
-                            _uiState.nSurfaceU = Math.Min(_uiState.nSurfaceU, 8);
-                        }
-                        if (ImGui.InputInt("Segments (v)", ref _uiState.nSurfaceV, 1))
+                            ImGui.SetNextItemWidth(100f);
+                            ImGui.DragFloat("Width", ref _uiState.surfWidth, 0.1f, 0.1f, 100);
+                            ImGui.SetNextItemWidth(100f);
+                            ImGui.DragFloat("Height", ref _uiState.surfHeight, 0.1f, 0.1f, 100);
+                        } 
+                        else
                         {
-                            _uiState.nSurfaceV = Math.Max(_uiState.nSurfaceV, 1);
-                            _uiState.nSurfaceV = Math.Min(_uiState.nSurfaceV, 8);
+                            ImGui.SetNextItemWidth(100f);
+                            ImGui.DragFloat("Radius", ref _uiState.cylinderRadius, 0.1f, 0.1f, 100);
+                            ImGui.SetNextItemWidth(100f);
+                            ImGui.DragFloat("Height", ref _uiState.cylinderHeight, 0.1f, 0.1f, 100);
                         }
+
+                        ImGui.Separator();
+                        
+                        ImGui.SetNextItemWidth(100f);
+                        ImGui.InputInt("Segments (u)", ref _uiState.nSurfaceU, 1);
+                        _uiState.nSurfaceU = Math.Max(_uiState.nSurfaceU, 1);
+                        _uiState.nSurfaceU = Math.Min(_uiState.nSurfaceU, 8);
+                        
+                        ImGui.SetNextItemWidth(100f);
+                        ImGui.InputInt("Segments (v)", ref _uiState.nSurfaceV, 1);
+                        _uiState.nSurfaceV = Math.Max(_uiState.nSurfaceV, _uiState.cylinder ? 2 : 1);
+                        _uiState.nSurfaceV = Math.Min(_uiState.nSurfaceV, 8);
 
                         if (ImGui.Button("Accept"))
                         {
                             ImGui.CloseCurrentPopup();
-                            scene.AddModel(new BezierSurfaceSceneModel(new C0BezierSurface(_uiState.nSurfaceU, _uiState.nSurfaceV),
-                                "Surface" + (scene.complexModels.Count + 1)), 
+                            if (!_uiState.cylinder)
+                            {
+                                scene.AddModel(new BezierSurfaceSceneModel(new C0BezierSurface(_uiState.nSurfaceU, _uiState.nSurfaceV, _uiState.cylinder),
+                                "Surface " + (scene.complexModels.Count + 1)),
                                 _uiState.surfWidth, _uiState.surfHeight);
+                            }
+                            else
+                            {
+                                scene.AddModel(new BezierSurfaceSceneModel(new C0BezierSurface(_uiState.nSurfaceU, _uiState.nSurfaceV, _uiState.cylinder),
+                                "Cylinder " + (scene.complexModels.Count + 1)),
+                                _uiState.cylinderHeight, _uiState.cylinderRadius);
+                            }
+                            
                             _uiState.createMenuVisible = false;
                         }
 
-                        ImGui.SetWindowSize(new System.Numerics.Vector2(300, ImGui.GetContentRegionAvail().Y));
+                        ImGui.SetWindowSize(new System.Numerics.Vector2(200, ImGui.GetContentRegionAvail().Y));
                         ImGui.EndPopup();
                     }
                 }
@@ -705,8 +738,10 @@ namespace SimpleCAD.Source
             public float cameraSpeed;
             public bool gridX, gridY, gridZ;
             public float surfWidth, surfHeight;
+            public float cylinderRadius, cylinderHeight;
             public int nSurfaceU, nSurfaceV;
             public bool showControlPoints;
+            public bool cylinder;
         }
     }
 }

@@ -90,33 +90,26 @@ namespace SimpleCAD.Source.Environment
         }
 
         // Custom behavior since we need to add points along with the model.
-        public void AddModel(BezierSurfaceSceneModel model, float width, float height)
+        public void AddModel(BezierSurfaceSceneModel model, float dimU, float dimV)
         {
-            // Add non-deletable points along with the surface
-
             List<BasicSceneModel> points = new List<BasicSceneModel>();
 
-            for (int u = 0; u < model.PointsU; u++)
+            var generated = model.GenerateControlPoints(dimU, dimV);
+
+            foreach (var pos in generated)
             {
-                for (int v = 0; v < model.PointsV; v++)
-                {
-                    // Non-deletable control point
-                    var point = new BasicSceneModel(
-                        new Point(ColorPalette.DeselectedColor), 
-                        model.Name + " Point [" + u + "," + v + "]", 
-                        PrimitiveType.Points, true, false);
+                var point = new BasicSceneModel(
+                    new Point(ColorPalette.DeselectedColor),
+                    model.Name + " Point", 
+                    PrimitiveType.Points, true, false);
 
-                    var translationX = u * width / ((float)model.PointsU - 1) - width / 2f;
-                    var translationZ = v * height / ((float)model.PointsV - 1) - height / 2f;
+                point.Translate(cursorPos);
+                point.Translate(pos, true);
 
-                    point.Translate(cursorPos);
-                    point.Translate(new Vector3(translationX, 0, translationZ), true);
-                    points.Add(point);
-
-                    basicModels.Add(point);
-                }
+                basicModels.Add(point);
+                points.Add(point);
             }
-
+            
             model.SetPoints(points, true);
             complexModels.Add(model);
         }
