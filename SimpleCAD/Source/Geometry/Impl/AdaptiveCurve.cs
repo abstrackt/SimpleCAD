@@ -137,10 +137,9 @@ namespace SimpleCAD.Source.Geometry
             return new List<Vector3>();
         }
 
-        // Return updated control points in reaction to a virtual point being moved.
         public virtual List<Vector3> MoveVirtualPoint(int i, Vector3 position) 
         {
-            return new List<Vector3>(controlPoints);
+            return new List<Vector3>();
         }
 
         public Color4 GetColor()

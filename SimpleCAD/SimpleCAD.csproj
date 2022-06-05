@@ -66,7 +66,7 @@
   <ItemGroup />
   <ItemGroup>
     <Compile Include="Source\AppWindow.cs" />
-    <Compile Include="Source\Environment\Elements\BezierSurfaceSceneModel.cs" />
+    <Compile Include="Source\Environment\Elements\SurfaceSceneModel.cs" />
     <Compile Include="Source\Environment\Elements\ControlPointSceneModel.cs" />
     <Compile Include="Source\Environment\Elements\BezierCurveSceneModel.cs" />
     <Compile Include="Source\Environment\Elements\SceneModel.cs" />
@@ -77,6 +77,7 @@
     <Compile Include="Source\Environment\Utils\LineRenderer.cs" />
     <Compile Include="Source\Geometry\Impl\AdaptiveCurve.cs" />
     <Compile Include="Source\Geometry\Impl\C0BezierSurface.cs" />
+    <Compile Include="Source\Geometry\Impl\C2SplineSurface.cs" />
     <Compile Include="Source\Geometry\Impl\Surface.cs" />
     <Compile Include="Source\Geometry\Impl\C0BezierCurve.cs" />
     <Compile Include="Source\Geometry\Impl\C2InterpolatingCurve.cs" />
@@ -109,6 +110,10 @@
     <Compile Include="Source\Utils\Shader.cs" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="Source\Shaders\splineSurface.tesc" />
+    <None Include="Source\Shaders\splineSurface.frag" />
+    <None Include="Source\Shaders\splineSurface.tese" />
+    <None Include="Source\Shaders\splineSurface.vert" />
     <None Include="Source\Shaders\bezierCurve.frag" />
     <None Include="Source\Shaders\bezierCurve.tesc">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
@@ -147,7 +152,11 @@ xcopy /y $(ProjectDir)Source\Shaders\bezierCurve.tese  $(ProjectDir)$(OutDir)
 xcopy /y $(ProjectDir)Source\Shaders\bezierSurface.vert  $(ProjectDir)$(OutDir)
 xcopy /y $(ProjectDir)Source\Shaders\bezierSurface.frag  $(ProjectDir)$(OutDir)
 xcopy /y $(ProjectDir)Source\Shaders\bezierSurface.tesc  $(ProjectDir)$(OutDir)
-xcopy /y $(ProjectDir)Source\Shaders\bezierSurface.tese  $(ProjectDir)$(OutDir)</PostBuildEvent>
+xcopy /y $(ProjectDir)Source\Shaders\bezierSurface.tese  $(ProjectDir)$(OutDir)
+xcopy /y $(ProjectDir)Source\Shaders\splineSurface.vert  $(ProjectDir)$(OutDir)
+xcopy /y $(ProjectDir)Source\Shaders\splineSurface.frag  $(ProjectDir)$(OutDir)
+xcopy /y $(ProjectDir)Source\Shaders\splineSurface.tesc  $(ProjectDir)$(OutDir)
+xcopy /y $(ProjectDir)Source\Shaders\splineSurface.tese  $(ProjectDir)$(OutDir)</PostBuildEvent>
   </PropertyGroup>
   <Import Project="packages\ImGui.NET.1.78.0\build\net40\ImGui.NET.targets" Condition="Exists('packages\ImGui.NET.1.78.0\build\net40\ImGui.NET.targets')" />
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">

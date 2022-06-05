@@ -12,23 +12,28 @@ namespace SimpleCAD.Source.Geometry
         protected Vector3[,] controlPoints;
         protected List<Vertex> vertexCache;
         protected int patchesU, patchesV;
-        protected readonly bool wrapU, wrapV;
+        protected readonly bool wrapU;
 
         public int PatchesU => patchesU;
         public int PatchesV => patchesV;
 
-        public int PointsU => PatchSize + (PatchOffset) * (PatchesU - 1) - (TopologyWrap.u ? 1 : 0);
-        public int PointsV => PatchSize + (PatchOffset) * (PatchesV - 1) - (TopologyWrap.v ? 1 : 0);
+        public int PointsU => PatchSize + (PatchOffset) * (PatchesU - 1) - (Wrap ? 1 : 0);
+        public int PointsV => PatchSize + (PatchOffset) * (PatchesV - 1);
+
+        public abstract string VertexShader { get; }
+        public abstract string FragShader { get; }
+        public abstract string TescShader { get; }
+        public abstract string TeseShader { get; }
 
         public abstract int PatchSize { get; }
         public abstract int PatchOffset { get; }
 
         public abstract (int u, int v) TesselationLevel { get; }
-        public (bool u, bool v) TopologyWrap => (wrapU, wrapV);
+        public bool Wrap => wrapU;
 
         public bool GeometryChanged() => true;
 
-        public Surface(int patchesU, int patchesV, bool wrapU = false, bool wrapV = false)
+        public Surface(int patchesU, int patchesV, bool wrapU = false)
         {
             if (patchesU < 1 || patchesV < 1)
             {
@@ -36,7 +41,6 @@ namespace SimpleCAD.Source.Geometry
             }
 
             this.wrapU = wrapU;
-            this.wrapV = wrapV;
             this.patchesU = patchesU;
             this.patchesV = patchesV;
             controlPoints = new Vector3[PointsU, PointsV];
@@ -54,7 +58,7 @@ namespace SimpleCAD.Source.Geometry
             {
                 for (int v = 0; v < PointsV; v++)
                 {
-                    controlPoints[u, v] = positions[u * PointsV + v]; 
+                    controlPoints[u, v] = positions[u + v * PointsU]; 
                 }
             }
         }
@@ -63,11 +67,6 @@ namespace SimpleCAD.Source.Geometry
 
         protected virtual void BeforeMeshRender() { }
 
-        protected virtual Vector3[,] ProcessControlPoints(Vector3[,] points)
-        {
-            return points;
-        }
-
         // For tesselation shader
         private void GeneratePatches(Vector3[,] points)
         {
@@ -75,9 +74,9 @@ namespace SimpleCAD.Source.Geometry
 
             int currentU = 0, currentV = 0;
 
-            while(currentU + PatchSize <= (PointsU + (TopologyWrap.u ? 1 : 0)))
+            while(currentU + PatchSize <= (PointsU + (Wrap ? (PatchSize - PatchOffset) : 0)))
             {
-                while (currentV + PatchSize <= (PointsV + (TopologyWrap.v ? 1 : 0)))
+                while (currentV + PatchSize <= PointsV)
                 {
                     for (int u = currentU; u < currentU + PatchSize; u++)
                     {
@@ -101,10 +100,7 @@ namespace SimpleCAD.Source.Geometry
         {
             BeforeMeshRender();
 
-            // Generate bezier points
-            var points = ProcessControlPoints(controlPoints);
-
-            GeneratePatches(points);
+            GeneratePatches(controlPoints);
 
             return (vertexCache.ToArray(), new uint[] { });
         }
@@ -129,17 +125,7 @@ namespace SimpleCAD.Source.Geometry
 
         public List<Vector3> MoveVirtualPoint(int i, Vector3 position)
         {
-            var list = new List<Vector3>();
-
-            for (int x = 0; x < controlPoints.GetLength(0); x++)
-            {
-                for (int y = 0; y < controlPoints.GetLength(1); y++)
-                {
-                    list.Add(controlPoints[x, y]);
-                }
-            }
-
-            return list;
+            return new List<Vector3>();
         }
     }
 }

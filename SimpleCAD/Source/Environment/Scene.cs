@@ -90,7 +90,7 @@ namespace SimpleCAD.Source.Environment
         }
 
         // Custom behavior since we need to add points along with the model.
-        public void AddModel(BezierSurfaceSceneModel model, float dimU, float dimV)
+        public void AddModel(SurfaceSceneModel model, float dimU, float dimV)
         {
             List<BasicSceneModel> points = new List<BasicSceneModel>();
 

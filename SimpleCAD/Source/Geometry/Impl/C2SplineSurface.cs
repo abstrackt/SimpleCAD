@@ -10,22 +10,22 @@ using System.Threading.Tasks;
 
 namespace SimpleCAD.Source.Geometry
 {
-    public class C0BezierSurface : Surface, ISceneGUIElement
+    public class C2SplineSurface : Surface, ISceneGUIElement
     {
         private bool _drawPolygon;
 
         public override int PatchSize => 4;
-        public override int PatchOffset => 3;
+        public override int PatchOffset => 1;
         public override (int u, int v) TesselationLevel => (_tessU, _tessV);
 
-        public override string VertexShader => "bezierSurface.vert";
-        public override string FragShader => "bezierSurface.frag";
-        public override string TescShader => "bezierSurface.tesc";
-        public override string TeseShader => "bezierSurface.tese";
+        public override string VertexShader => "splineSurface.vert";
+        public override string FragShader => "splineSurface.frag";
+        public override string TescShader => "splineSurface.tesc";
+        public override string TeseShader => "splineSurface.tese";
 
         private int _tessU, _tessV;
 
-        public C0BezierSurface(int patchesU, int patchesV, bool wrapU) : base(patchesU, patchesV, wrapU) 
+        public C2SplineSurface(int patchesU, int patchesV, bool wrapU) : base(patchesU, patchesV, wrapU)
         {
             _tessU = 4;
             _tessV = 4;
@@ -89,35 +89,18 @@ namespace SimpleCAD.Source.Geometry
             // Create cylinder
             if (wrapU)
             {
-                var n = 2 * (float)Math.PI / PatchesU;
+                var n = 2 * (float)Math.PI / PointsU;
                 for (int v = 0; v < PointsV; v++)
                 {
-                    for (int u = 0; u < PatchesU; u++)
+                    for (int u = 0; u < PointsU; u++)
                     {
                         var z = v * mV / ((float)PointsV - 1) - mV / 2f;
 
                         Vector3 p1 = new Vector3((float)Math.Cos(u * n), (float)Math.Sin(u * n), 0);
-                        Vector3 p4 = new Vector3((float)Math.Cos((u + 1) * n), (float)Math.Sin((u + 1) * n), 0);
-
-                        var t1 = new Vector3(-p1.Y, p1.X, 0);
-                        var t2 = new Vector3(p4.Y, -p4.X, 0);
-
-                        Vector3 p2 = p1 + t1 * 4 / 3f * (float)Math.Tan(Math.PI / (2 * PatchesU));
-                        Vector3 p3 = p4 + t2 * 4 / 3f * (float)Math.Tan(Math.PI / (2 * PatchesU));
-
-                        p1 *= mU;
-                        p2 *= mU;
-                        p3 *= mU;
-                        p4 *= mU;
 
                         p1.Z = z;
-                        p2.Z = z;
-                        p3.Z = z;
-                        p4.Z = z;
 
                         points.Add(p1);
-                        points.Add(p2);
-                        points.Add(p3);
                     }
                 }
             }

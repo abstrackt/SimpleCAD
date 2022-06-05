@@ -6,7 +6,7 @@ using SimpleCAD.Source.Geometry;
 
 namespace SimpleCAD.Source.Environment
 {
-    public class BezierSurfaceSceneModel : ControlPointSceneModel
+    public class SurfaceSceneModel : ControlPointSceneModel
     {
         private LineRenderer _lines;
         private Surface _surface;
@@ -15,7 +15,6 @@ namespace SimpleCAD.Source.Environment
         {
             set
             {
-                // Very important to do that here so that control point logic does not break.
                 base.Geometry = value;
 
                 if (value is Surface surface)
@@ -29,13 +28,13 @@ namespace SimpleCAD.Source.Environment
             }
         }
 
-        public BezierSurfaceSceneModel(IControlPointGeometry geometry, string name) : base(geometry, name, PrimitiveType.Patches, true, true)
+        public SurfaceSceneModel(Surface geometry, string name) : base(geometry, name, PrimitiveType.Patches, true, true)
         {
             _lines = new LineRenderer();
 
-            SetVertShader("bezierSurface.vert");
-            SetFragShader("bezierSurface.frag");
-            SetTesselationShader("bezierSurface.tesc", "bezierSurface.tese");
+            SetVertShader(geometry.VertexShader);
+            SetFragShader(geometry.FragShader);
+            SetTesselationShader(geometry.TescShader, geometry.TeseShader);
         }
 
         protected override void AfterRendering()

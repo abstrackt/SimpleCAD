@@ -13,11 +13,19 @@ using SimpleCAD.Source.Utils;
 
 namespace SimpleCAD.Source
 {
+
+
     class AppWindow : GameWindow
     {
         private ImGuiController _controller;
         private Color4 _bgColor;
         private GUIState _uiState;
+
+        private enum SurfaceType
+        {
+            C0,
+            C2
+        }
 
         public AppWindow(int width, int height, string title) : base(width, height, GraphicsMode.Default) 
         {
@@ -43,7 +51,8 @@ namespace SimpleCAD.Source
                 cylinderHeight = 5f,
                 cylinderRadius = 1.5f,
                 nSurfaceU = 1,
-                nSurfaceV = 1
+                nSurfaceV = 1,
+                surfaceType = SurfaceType.C0
             };
 
             scene.camera.ChangeAspect(Width, Height);
@@ -301,6 +310,13 @@ namespace SimpleCAD.Source
 
                     if (ImGui.Button("Surface (C0)", new System.Numerics.Vector2(100, 20)))
                     {
+                        _uiState.surfaceType = SurfaceType.C0;
+                        ImGui.OpenPopup("Surface Creator");
+                    }
+
+                    if (ImGui.Button("Surface (C2)", new System.Numerics.Vector2(100, 20)))
+                    {
+                        _uiState.surfaceType = SurfaceType.C2;
                         ImGui.OpenPopup("Surface Creator");
                     }
 
@@ -340,28 +356,40 @@ namespace SimpleCAD.Source
                         
                         ImGui.SetNextItemWidth(100f);
                         ImGui.InputInt("Segments (u)", ref _uiState.nSurfaceU, 1);
-                        _uiState.nSurfaceU = Math.Max(_uiState.nSurfaceU, 1);
+                        _uiState.nSurfaceU = Math.Max(_uiState.nSurfaceU, _uiState.cylinder ? 2 : 1);
                         _uiState.nSurfaceU = Math.Min(_uiState.nSurfaceU, 8);
                         
                         ImGui.SetNextItemWidth(100f);
                         ImGui.InputInt("Segments (v)", ref _uiState.nSurfaceV, 1);
-                        _uiState.nSurfaceV = Math.Max(_uiState.nSurfaceV, _uiState.cylinder ? 2 : 1);
+                        _uiState.nSurfaceV = Math.Max(_uiState.nSurfaceV, 1);
                         _uiState.nSurfaceV = Math.Min(_uiState.nSurfaceV, 8);
 
                         if (ImGui.Button("Accept"))
                         {
                             ImGui.CloseCurrentPopup();
+
+                            Surface geom = null;
+
+                            if (_uiState.surfaceType == SurfaceType.C0) 
+                            {
+                                geom = new C0BezierSurface(_uiState.nSurfaceU, _uiState.nSurfaceV, _uiState.cylinder);
+                            } 
+                            else if (_uiState.surfaceType == SurfaceType.C2)
+                            {
+                                geom = new C2SplineSurface(_uiState.nSurfaceU, _uiState.nSurfaceV, _uiState.cylinder);
+                            }
+
                             if (!_uiState.cylinder)
                             {
-                                scene.AddModel(new BezierSurfaceSceneModel(new C0BezierSurface(_uiState.nSurfaceU, _uiState.nSurfaceV, _uiState.cylinder),
+                                scene.AddModel(new SurfaceSceneModel(geom,
                                 "Surface " + (scene.complexModels.Count + 1)),
                                 _uiState.surfWidth, _uiState.surfHeight);
                             }
                             else
                             {
-                                scene.AddModel(new BezierSurfaceSceneModel(new C0BezierSurface(_uiState.nSurfaceU, _uiState.nSurfaceV, _uiState.cylinder),
+                                scene.AddModel(new SurfaceSceneModel(geom,
                                 "Cylinder " + (scene.complexModels.Count + 1)),
-                                _uiState.cylinderHeight, _uiState.cylinderRadius);
+                                _uiState.cylinderRadius, _uiState.cylinderHeight);
                             }
                             
                             _uiState.createMenuVisible = false;
@@ -742,6 +770,7 @@ namespace SimpleCAD.Source
             public int nSurfaceU, nSurfaceV;
             public bool showControlPoints;
             public bool cylinder;
+            public SurfaceType surfaceType;
         }
     }
 }
