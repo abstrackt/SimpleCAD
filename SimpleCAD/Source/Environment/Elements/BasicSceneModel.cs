@@ -1,6 +1,7 @@
 ﻿using ImGuiNET;
 using OpenTK;
 using OpenTK.Graphics.OpenGL4;
+using OpenTK.Mathematics;
 using SimpleCAD.Source.Geometry;
 using SimpleCAD.Source.GUI;
 using SimpleCAD.Source.Utils;

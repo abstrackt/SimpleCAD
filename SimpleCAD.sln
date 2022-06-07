@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.2.32526.322
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SimpleCAD", "SimpleCAD\SimpleCAD.csproj", "{693E04CA-DC78-4D01-93DC-6363E13FB0BC}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{693E04CA-DC78-4D01-93DC-6363E13FB0BC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{693E04CA-DC78-4D01-93DC-6363E13FB0BC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{693E04CA-DC78-4D01-93DC-6363E13FB0BC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{693E04CA-DC78-4D01-93DC-6363E13FB0BC}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {4D537D3F-F229-4DBF-9571-FE3EAC434286}
+	EndGlobalSection
+EndGlobal

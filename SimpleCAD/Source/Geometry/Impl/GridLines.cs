@@ -1,5 +1,6 @@
 ﻿using OpenTK;
 using OpenTK.Graphics;
+using OpenTK.Mathematics;
 using SimpleCAD.Source.Utils;
 
 namespace SimpleCAD.Source.Geometry

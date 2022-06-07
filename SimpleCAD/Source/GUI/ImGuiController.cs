@@ -2,6 +2,9 @@
 using OpenTK;
 using OpenTK.Graphics.OpenGL4;
 using OpenTK.Input;
+using OpenTK.Mathematics;
+using OpenTK.Windowing.Desktop;
+using OpenTK.Windowing.GraphicsLibraryFramework;
 using SimpleCAD.Source.Utils;
 using System;
 using System.Collections.Generic;
@@ -22,18 +25,13 @@ namespace SimpleCAD.Source.GUI
         private Texture _fontTexture;
         private GUIShader _guiShader;
 
-        private int _windowWidth;
-        private int _windowHeight;
-
-        private System.Numerics.Vector2 _scaleFactor = System.Numerics.Vector2.One;
+        private Vector2i _windowSize;
 
         /// <summary>
         /// Constructs a new ImGuiController.
         /// </summary>
-        public ImGuiController(int width, int height)
+        public ImGuiController(GameWindow wnd)
         {
-            _windowWidth = width;
-            _windowHeight = height;
 
             IntPtr context = ImGui.CreateContext();
             ImGui.SetCurrentContext(context);
@@ -45,16 +43,10 @@ namespace SimpleCAD.Source.GUI
             CreateDeviceResources();
             SetKeyMappings();
 
-            SetPerFrameImGuiData(1f / 60f);
+            SetPerFrameImGuiData(wnd, 1f / 60f);
 
             ImGui.NewFrame();
             _frameBegun = true;
-        }
-
-        public void WindowResized(int width, int height)
-        {
-            _windowWidth = width;
-            _windowHeight = height;
         }
 
         public void DestroyDeviceObjects()
@@ -169,48 +161,45 @@ void main()
                 ImGui.Render();
             }
 
-            SetPerFrameImGuiData(deltaSeconds);
+            SetPerFrameImGuiData(wnd, deltaSeconds);
             UpdateImGuiInput(wnd);
 
             _frameBegun = true;
             ImGui.NewFrame();
         }
 
-        private void SetPerFrameImGuiData(float deltaSeconds)
+        private void SetPerFrameImGuiData(GameWindow wnd, float deltaSeconds)
         {
             ImGuiIOPtr io = ImGui.GetIO();
+            _windowSize = wnd.Size;
             io.DisplaySize = new System.Numerics.Vector2(
-                _windowWidth / _scaleFactor.X,
-                _windowHeight / _scaleFactor.Y);
-            io.DisplayFramebufferScale = _scaleFactor;
+                wnd.Size.X,
+                wnd.Size.Y);
+            wnd.TryGetCurrentMonitorScale(out var x, out var y);
+            io.DisplayFramebufferScale = new System.Numerics.Vector2(x, y);
             io.DeltaTime = deltaSeconds; // DeltaTime is in seconds.
         }
 
-        MouseState PrevMouseState;
-        KeyboardState PrevKeyboardState;
         readonly List<char> PressedChars = new List<char>();
 
         private void UpdateImGuiInput(GameWindow wnd)
         {
             ImGuiIOPtr io = ImGui.GetIO();
 
-            MouseState MouseState = Mouse.GetCursorState();
-            KeyboardState KeyboardState = Keyboard.GetState();
+            io.MouseDown[0] = wnd.IsMouseButtonDown(MouseButton.Left);
+            io.MouseDown[1] = wnd.IsMouseButtonDown(MouseButton.Right);
+            io.MouseDown[2] = wnd.IsMouseButtonDown(MouseButton.Middle);
 
-            io.MouseDown[0] = MouseState.LeftButton == ButtonState.Pressed;
-            io.MouseDown[1] = MouseState.RightButton == ButtonState.Pressed;
-            io.MouseDown[2] = MouseState.MiddleButton == ButtonState.Pressed;
+            var mousePos = wnd.MousePosition;
+            io.MousePos = new System.Numerics.Vector2(mousePos.X, mousePos.Y);
 
-            var screenPoint = new System.Drawing.Point(MouseState.X, MouseState.Y);
-            var point = wnd.PointToClient(screenPoint);
-            io.MousePos = new System.Numerics.Vector2(point.X, point.Y);
+            io.MouseWheel = wnd.MouseState.ScrollDelta.Y;
+            io.MouseWheelH = wnd.MouseState.ScrollDelta.X;
 
-            io.MouseWheel = MouseState.Scroll.Y - PrevMouseState.Scroll.Y;
-            io.MouseWheelH = MouseState.Scroll.X - PrevMouseState.Scroll.X;
-
-            foreach (Key key in Enum.GetValues(typeof(Key)))
+            foreach (Keys key in Enum.GetValues(typeof(Keys)))
             {
-                io.KeysDown[(int)key] = KeyboardState.IsKeyDown(key);
+                if (key != Keys.Unknown)
+                    io.KeysDown[(int)key] = wnd.IsKeyDown(key);
             }
 
             foreach (var c in PressedChars)
@@ -219,13 +208,10 @@ void main()
             }
             PressedChars.Clear();
 
-            io.KeyCtrl = KeyboardState.IsKeyDown(Key.ControlLeft) || KeyboardState.IsKeyDown(Key.ControlRight);
-            io.KeyAlt = KeyboardState.IsKeyDown(Key.AltLeft) || KeyboardState.IsKeyDown(Key.AltRight);
-            io.KeyShift = KeyboardState.IsKeyDown(Key.ShiftLeft) || KeyboardState.IsKeyDown(Key.ShiftRight);
-            io.KeySuper = KeyboardState.IsKeyDown(Key.WinLeft) || KeyboardState.IsKeyDown(Key.WinRight);
-
-            PrevMouseState = MouseState;
-            PrevKeyboardState = KeyboardState;
+            io.KeyCtrl = wnd.IsKeyDown(Keys.LeftControl) || wnd.IsKeyDown(Keys.RightControl);
+            io.KeyAlt = wnd.IsKeyDown(Keys.LeftAlt) || wnd.IsKeyDown(Keys.RightAlt);
+            io.KeyShift = wnd.IsKeyDown(Keys.LeftShift) || wnd.IsKeyDown(Keys.RightShift);
+            io.KeySuper = wnd.IsKeyDown(Keys.LeftSuper) || wnd.IsKeyDown(Keys.RightSuper);
         }
 
         internal void PressChar(char keyChar)
@@ -236,25 +222,25 @@ void main()
         private static void SetKeyMappings()
         {
             ImGuiIOPtr io = ImGui.GetIO();
-            io.KeyMap[(int)ImGuiKey.Tab] = (int)Key.Tab;
-            io.KeyMap[(int)ImGuiKey.LeftArrow] = (int)Key.Left;
-            io.KeyMap[(int)ImGuiKey.RightArrow] = (int)Key.Right;
-            io.KeyMap[(int)ImGuiKey.UpArrow] = (int)Key.Up;
-            io.KeyMap[(int)ImGuiKey.DownArrow] = (int)Key.Down;
-            io.KeyMap[(int)ImGuiKey.PageUp] = (int)Key.PageUp;
-            io.KeyMap[(int)ImGuiKey.PageDown] = (int)Key.PageDown;
-            io.KeyMap[(int)ImGuiKey.Home] = (int)Key.Home;
-            io.KeyMap[(int)ImGuiKey.End] = (int)Key.End;
-            io.KeyMap[(int)ImGuiKey.Delete] = (int)Key.Delete;
-            io.KeyMap[(int)ImGuiKey.Backspace] = (int)Key.BackSpace;
-            io.KeyMap[(int)ImGuiKey.Enter] = (int)Key.Enter;
-            io.KeyMap[(int)ImGuiKey.Escape] = (int)Key.Escape;
-            io.KeyMap[(int)ImGuiKey.A] = (int)Key.A;
-            io.KeyMap[(int)ImGuiKey.C] = (int)Key.C;
-            io.KeyMap[(int)ImGuiKey.V] = (int)Key.V;
-            io.KeyMap[(int)ImGuiKey.X] = (int)Key.X;
-            io.KeyMap[(int)ImGuiKey.Y] = (int)Key.Y;
-            io.KeyMap[(int)ImGuiKey.Z] = (int)Key.Z;
+            io.KeyMap[(int)ImGuiKey.Tab] = (int)Keys.Tab;
+            io.KeyMap[(int)ImGuiKey.LeftArrow] = (int)Keys.Left;
+            io.KeyMap[(int)ImGuiKey.RightArrow] = (int)Keys.Right;
+            io.KeyMap[(int)ImGuiKey.UpArrow] = (int)Keys.Up;
+            io.KeyMap[(int)ImGuiKey.DownArrow] = (int)Keys.Down;
+            io.KeyMap[(int)ImGuiKey.PageUp] = (int)Keys.PageUp;
+            io.KeyMap[(int)ImGuiKey.PageDown] = (int)Keys.PageDown;
+            io.KeyMap[(int)ImGuiKey.Home] = (int)Keys.Home;
+            io.KeyMap[(int)ImGuiKey.End] = (int)Keys.End;
+            io.KeyMap[(int)ImGuiKey.Delete] = (int)Keys.Delete;
+            io.KeyMap[(int)ImGuiKey.Backspace] = (int)Keys.Backspace;
+            io.KeyMap[(int)ImGuiKey.Enter] = (int)Keys.Enter;
+            io.KeyMap[(int)ImGuiKey.Escape] = (int)Keys.Escape;
+            io.KeyMap[(int)ImGuiKey.A] = (int)Keys.A;
+            io.KeyMap[(int)ImGuiKey.C] = (int)Keys.C;
+            io.KeyMap[(int)ImGuiKey.V] = (int)Keys.V;
+            io.KeyMap[(int)ImGuiKey.X] = (int)Keys.X;
+            io.KeyMap[(int)ImGuiKey.Y] = (int)Keys.Y;
+            io.KeyMap[(int)ImGuiKey.Z] = (int)Keys.Z;
         }
 
         private void RenderImDrawData(ImDrawDataPtr draw_data)
@@ -361,7 +347,7 @@ void main()
                         Util.CheckGLError("Texture");
 
                         var clip = pcmd.ClipRect;
-                        GL.Scissor((int)clip.X, _windowHeight - (int)clip.W, (int)(clip.Z - clip.X), (int)(clip.W - clip.Y));
+                        GL.Scissor((int)clip.X, _windowSize.Y - (int)clip.W, (int)(clip.Z - clip.X), (int)(clip.W - clip.Y));
                         Util.CheckGLError("Scissor");
 
                         GL.DrawElementsBaseVertex(PrimitiveType.Triangles, (int)pcmd.ElemCount, DrawElementsType.UnsignedShort, (IntPtr)(idx_offset * sizeof(ushort)), vtx_offset);

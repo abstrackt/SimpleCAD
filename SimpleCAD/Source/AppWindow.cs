@@ -5,6 +5,10 @@ using OpenTK;
 using OpenTK.Graphics;
 using OpenTK.Graphics.OpenGL4;
 using OpenTK.Input;
+using OpenTK.Mathematics;
+using OpenTK.Windowing.Common;
+using OpenTK.Windowing.Desktop;
+using OpenTK.Windowing.GraphicsLibraryFramework;
 using SimpleCAD.Source.Environment;
 using SimpleCAD.Source.Geometry;
 using SimpleCAD.Source.GUI;
@@ -13,8 +17,6 @@ using SimpleCAD.Source.Utils;
 
 namespace SimpleCAD.Source
 {
-
-
     class AppWindow : GameWindow
     {
         private ImGuiController _controller;
@@ -27,10 +29,8 @@ namespace SimpleCAD.Source
             C2
         }
 
-        public AppWindow(int width, int height, string title) : base(width, height, GraphicsMode.Default) 
+        public AppWindow(GameWindowSettings gameWindowSettings, NativeWindowSettings nativeWindowSettings) : base(gameWindowSettings, nativeWindowSettings) 
         {
-            Title = title;
-
             var scene = Scene.Instance;
 
             _uiState = new GUIState()
@@ -55,7 +55,7 @@ namespace SimpleCAD.Source
                 surfaceType = SurfaceType.C0
             };
 
-            scene.camera.ChangeAspect(Width, Height);
+            scene.camera.ChangeAspect(Size);
             scene.camera.ChangeViewportConfig(_uiState.fov, _uiState.nearZ, _uiState.farZ, _uiState.ortho);
             scene.camera.ChangeAnaglyphConfig(_uiState.eyeDistance, _uiState.focusDistance);
             scene.camera.SetRenderMode(Camera.RenderMode.Default);
@@ -225,8 +225,8 @@ namespace SimpleCAD.Source
                 ImGuiWindowFlags.NoMove | 
                 ImGuiWindowFlags.NoCollapse))
             {
-                ImGui.SetWindowSize(new System.Numerics.Vector2(300, Height / 3));
-                ImGui.SetWindowPos(new System.Numerics.Vector2(Width - 300, 18));
+                ImGui.SetWindowSize(new System.Numerics.Vector2(300, Size.Y / 3));
+                ImGui.SetWindowPos(new System.Numerics.Vector2(Size.X - 300, 18));
 
                 ImGui.Checkbox("Show control points", ref _uiState.showControlPoints);
 
@@ -320,9 +320,7 @@ namespace SimpleCAD.Source
                         ImGui.OpenPopup("Surface Creator");
                     }
 
-                    var open = true;
-
-                    if (ImGui.BeginPopupModal("Surface Creator", ref open, ImGuiWindowFlags.NoResize))
+                    if (ImGui.BeginPopup("Surface Creator"))
                     {
                         ImGui.Text("Surface wrap mode");
                         if (ImGui.RadioButton("Wrap", _uiState.cylinder))
@@ -394,6 +392,11 @@ namespace SimpleCAD.Source
                             
                             _uiState.createMenuVisible = false;
                         }
+                        ImGui.SameLine();
+                        if (ImGui.Button("Cancel"))
+                        {
+                            ImGui.CloseCurrentPopup();
+                        }
 
                         ImGui.SetWindowSize(new System.Numerics.Vector2(200, ImGui.GetContentRegionAvail().Y));
                         ImGui.EndPopup();
@@ -413,8 +416,8 @@ namespace SimpleCAD.Source
                 ImGuiWindowFlags.NoMove | 
                 ImGuiWindowFlags.NoCollapse))
             {
-                ImGui.SetWindowSize(new System.Numerics.Vector2(300, Height / 9));
-                ImGui.SetWindowPos(new System.Numerics.Vector2(Width - 300, 18 + Height / 3));
+                ImGui.SetWindowSize(new System.Numerics.Vector2(300, Size.Y / 9));
+                ImGui.SetWindowPos(new System.Numerics.Vector2(Size.X - 300, 18 + Size.Y / 3));
                 var tmp = new System.Numerics.Vector3(scene.cursorPos.X, scene.cursorPos.Y, scene.cursorPos.Z);
                 if (ImGui.DragFloat3("Position##Cursor", ref tmp, 0.05f))
                 {
@@ -437,8 +440,8 @@ namespace SimpleCAD.Source
                 ImGuiWindowFlags.NoMove | 
                 ImGuiWindowFlags.NoCollapse))
             {
-                ImGui.SetWindowSize(new System.Numerics.Vector2(300, 5 * Height / 9 - 18));
-                ImGui.SetWindowPos(new System.Numerics.Vector2(Width - 300, 18 + 4 * Height / 9));
+                ImGui.SetWindowSize(new System.Numerics.Vector2(300, 5 * Size.Y / 9 - 18));
+                ImGui.SetWindowPos(new System.Numerics.Vector2(Size.X - 300, 18 + 4 * Size.Y / 9));
 
                 if (selection.TryGetSingleSelected(out var model))
                 { 
@@ -460,13 +463,16 @@ namespace SimpleCAD.Source
             DrawInspectorPanel();
         }
 
-        void OnKeyPress(object sender, KeyPressEventArgs e)
+        protected override void OnKeyDown(KeyboardKeyEventArgs e)
         {
-            _controller.PressChar(e.KeyChar);
+            base.OnKeyDown(e);
+            _controller.PressChar((char)e.Key);
         }
 
-        void OnMousePress(object sender, MouseButtonEventArgs e)
+        protected override void OnMouseDown(MouseButtonEventArgs e)
         {
+            base.OnMouseDown(e);
+
             var scene = Scene.Instance;
             var selection = SelectionManager.Instance;
             var raycaster = SceneRaycaster.Instance;
@@ -475,31 +481,31 @@ namespace SimpleCAD.Source
             {
                 if (e.Button == MouseButton.Left)
                 {
-                    if (raycaster.RaycastBasicSearch(new Vector2(e.X, e.Y), new Vector2(Width, Height), out var model))
+                    if (raycaster.RaycastBasicSearch(MousePosition, Size, out var model))
                     {
-                        if (InputWrapper.KeyDown(Key.X))
+                        if (IsKeyDown(Keys.X))
                         {
                             selection.Remove(model);
                         }
                         else
                         {
                             scene.capturedModel = model;
-                            if (!InputWrapper.KeyDown(Key.ShiftLeft))
+                            if (!IsKeyDown(Keys.LeftShift))
                             {
                                 selection.Clear();
                             }
                             selection.Add(model);
                         }
                     }
-                    else if (raycaster.RaycastVirtualSearch(new Vector2(e.X, e.Y), new Vector2(Width, Height), out var point))
+                    else if (raycaster.RaycastVirtualSearch(MousePosition, Size, out var point))
                     {
                         scene.capturedPoint = point;
                     }
                 }
 
-                if (e.Button == MouseButton.Left && InputWrapper.KeyDown(Key.P))
+                if (e.Button == MouseButton.Left && IsKeyDown(Keys.P))
                 {
-                    var ray = raycaster.Raycast(new Vector2(e.X, e.Y), new Vector2(Width, Height));
+                    var ray = raycaster.Raycast(MousePosition, Size);
                     var cameraPos = scene.camera.Position;
                     scene.cursorPos = ray * scene.cursorRaycastDist + cameraPos;
                     var point = new BasicSceneModel(new Point(ColorPalette.DeselectedColor), "Point " + (scene.basicModels.Count + 1), PrimitiveType.Points, true);
@@ -513,56 +519,19 @@ namespace SimpleCAD.Source
                     }
                 }
 
-                if (e.Button == MouseButton.Left && InputWrapper.KeyDown(Key.AltLeft))
+                if (e.Button == MouseButton.Left && IsKeyDown(Keys.LeftAlt))
                 {
-                    var ray = raycaster.Raycast(new Vector2(e.X, e.Y), new Vector2(Width, Height));
+                    var ray = raycaster.Raycast(MousePosition, Size);
                     var cameraPos = scene.camera.Position;
                     scene.cursorPos = ray * scene.cursorRaycastDist + cameraPos;
                 }
             }
         }
 
-        void OnMouseMove(object sender, MouseEventArgs e)
+        protected override void OnMouseUp(MouseButtonEventArgs e)
         {
-            var scene = Scene.Instance;
-            var selection = SelectionManager.Instance;
-            var raycaster = SceneRaycaster.Instance;
+            base.OnMouseUp(e);
 
-            if (!_uiState.ortho)
-            {
-                var ray = raycaster.Raycast(new Vector2(e.X, e.Y), new Vector2(Width, Height));
-                var cameraPos = scene.camera.Position;
-                
-                if (scene.capturedPoint != null)
-                {
-                    var dist = (cameraPos - scene.capturedPoint.Position).Length;
-                    var pos = cameraPos + ray * dist;
-
-                    if (InputWrapper.KeyDown(Key.Z))
-                    {
-                        pos = new Vector3((int)(2 * pos.X) / 2f, (int)(2 * pos.Y) / 2f, (int)(2 * pos.Z) / 2f);
-                    }
-
-                    scene.capturedPoint.parent.MoveVirtualPoint(scene.capturedPoint, pos);
-                } 
-                else if (scene.capturedModel != null)
-                {
-                    var dist = (cameraPos - scene.capturedModel.Position).Length;
-                    var pos = cameraPos + ray * dist;
-
-                    if (InputWrapper.KeyDown(Key.Z))
-                    {
-                        pos = new Vector3((int)(2 * pos.X) / 2f, (int)(2 * pos.Y) / 2f, (int)(2 * pos.Z) / 2f);
-                    }
-
-                    scene.capturedModel.Translate(pos);
-                    selection.ResetState();
-                }
-            }
-        }
-        
-        void OnMouseRelease(object sender, MouseButtonEventArgs e)
-        {
             var scene = Scene.Instance;
 
             if (!_uiState.ortho)
@@ -584,13 +553,13 @@ namespace SimpleCAD.Source
         {
             var scene = Scene.Instance;
 
-            if (InputWrapper.GetKeyDown(Key.Escape))
+            if (IsKeyDown(Keys.Escape))
             {
                 this.Close();
                 return;
             }
 
-            if (InputWrapper.KeyDown(Key.ControlLeft) && InputWrapper.KeyDown(Key.A))
+            if (IsKeyDown(Keys.LeftControl) && IsKeyDown(Keys.A))
             {
                 var selection = SelectionManager.Instance;
                 selection.Clear();
@@ -603,37 +572,37 @@ namespace SimpleCAD.Source
 
             var d = _uiState.cameraSpeed;
 
-            if (InputWrapper.KeyDown(Key.W))
+            if (IsKeyDown(Keys.W))
             {
                 scene.camera.MoveCameraTarget((scene.camera.viewM * new Vector4(0, 0, -d, 0)).Xyz, true);
                 scene.camera.TranslateCamera((scene.camera.viewM * new Vector4(0, 0, -d, 0)).Xyz, true);
             }
 
-            if (InputWrapper.KeyDown(Key.A))
+            if (IsKeyDown(Keys.A))
             {
                 scene.camera.MoveCameraTarget((scene.camera.viewM * new Vector4(-d, 0, 0, 0)).Xyz, true);
                 scene.camera.TranslateCamera((scene.camera.viewM * new Vector4(-d, 0, 0, 0)).Xyz, true);
             }
 
-            if (InputWrapper.KeyDown(Key.S))
+            if (IsKeyDown(Keys.S))
             {
                 scene.camera.MoveCameraTarget((scene.camera.viewM * new Vector4(0, 0, d, 0)).Xyz, true);
                 scene.camera.TranslateCamera((scene.camera.viewM * new Vector4(0, 0, d, 0)).Xyz, true);
             }
 
-            if (InputWrapper.KeyDown(Key.D))
+            if (IsKeyDown(Keys.D))
             {
                 scene.camera.MoveCameraTarget((scene.camera.viewM * new Vector4(d, 0, 0, 0)).Xyz, true);
                 scene.camera.TranslateCamera((scene.camera.viewM * new Vector4(d, 0, 0, 0)).Xyz, true);
             }
 
-            if (InputWrapper.KeyDown(Key.Q))
+            if (IsKeyDown(Keys.Q))
             {
                 scene.camera.MoveCameraTarget((scene.camera.viewM * new Vector4(0, d, 0, 0)).Xyz, true);
                 scene.camera.TranslateCamera((scene.camera.viewM * new Vector4(0, d, 0, 0)).Xyz, true);
             }
 
-            if (InputWrapper.KeyDown(Key.E))
+            if (IsKeyDown(Keys.E))
             {
                 scene.camera.MoveCameraTarget((scene.camera.viewM * new Vector4(0, -d, 0, 0)).Xyz, true);
                 scene.camera.TranslateCamera((scene.camera.viewM * new Vector4(0, -d, 0, 0)).Xyz, true);
@@ -643,28 +612,62 @@ namespace SimpleCAD.Source
         private void HandleMouseInput()
         {
             var scene = Scene.Instance;
+            var raycaster = SceneRaycaster.Instance;
+            var selection = SelectionManager.Instance;
 
-            if (InputWrapper.KeyDown(MouseButton.Right) && InputWrapper.KeyDown(Key.ControlLeft))
+            if (IsMouseButtonDown(MouseButton.Right) && IsKeyDown(Keys.LeftControl))
             {
-                var delta = InputWrapper.MouseDeltaPos();
+                var delta = MouseState.Delta;
 
                 scene.camera.RotateAround((scene.camera.viewM * new Vector4(Vector3.UnitY, 0)).Xyz.Normalized(), 0.005f * -delta.X);
                 scene.camera.RotateAround((scene.camera.viewM * new Vector4(Vector3.UnitX, 0)).Xyz.Normalized(), 0.005f * -delta.Y);
             }
 
-            if (InputWrapper.KeyDown(MouseButton.Left) && InputWrapper.KeyDown(Key.ControlLeft))
+            if (IsMouseButtonDown(MouseButton.Left) && IsKeyDown(Keys.LeftControl))
             {
-                var delta = InputWrapper.MouseDeltaPos();
+                var delta = MouseState.Delta;
 
                 scene.camera.MoveCameraTarget((scene.camera.viewM * new Vector4(0.01f * delta.X, 0.01f * delta.Y, 0, 0)).Xyz, true);
                 scene.camera.TranslateCamera((scene.camera.viewM * new Vector4(0.01f * delta.X, 0.01f * delta.Y, 0, 0)).Xyz, true);
             }
 
-            var zoomDelta = InputWrapper.MouseWheel();
+            var zoomDelta = MouseState.ScrollDelta.Y;
 
             if (zoomDelta != 0)
             {
                 scene.camera.ZoomCamera(-zoomDelta);
+            }
+
+            if (!_uiState.ortho)
+            {
+                var ray = raycaster.Raycast(MousePosition, Size);
+                var cameraPos = scene.camera.Position;
+
+                if (scene.capturedPoint != null)
+                {
+                    var dist = (cameraPos - scene.capturedPoint.Position).Length;
+                    var pos = cameraPos + ray * dist;
+
+                    if (IsKeyDown(Keys.Z))
+                    {
+                        pos = new Vector3((int)(2 * pos.X) / 2f, (int)(2 * pos.Y) / 2f, (int)(2 * pos.Z) / 2f);
+                    }
+
+                    scene.capturedPoint.parent.MoveVirtualPoint(scene.capturedPoint, pos);
+                }
+                else if (scene.capturedModel != null)
+                {
+                    var dist = (cameraPos - scene.capturedModel.Position).Length;
+                    var pos = cameraPos + ray * dist;
+
+                    if (IsKeyDown(Keys.Z))
+                    {
+                        pos = new Vector3((int)(2 * pos.X) / 2f, (int)(2 * pos.Y) / 2f, (int)(2 * pos.Z) / 2f);
+                    }
+
+                    scene.capturedModel.Translate(pos);
+                    selection.ResetState();
+                }
             }
         }
 
@@ -672,8 +675,6 @@ namespace SimpleCAD.Source
         {
            
             var scene = Scene.Instance;
-
-            InputWrapper.OnUpdateFrame();
 
             HandleKeyboardInput();
             HandleMouseInput();
@@ -683,36 +684,31 @@ namespace SimpleCAD.Source
             base.OnUpdateFrame(e);
         }
 
-        protected override void OnLoad(EventArgs e)
+        protected override void OnLoad()
         {
+            base.OnLoad();
+
             var scene = Scene.Instance;
 
             _bgColor = new Color4(0.3f, 0.3f, 0.3f, 1.0f);
-            _controller = new ImGuiController(Width, Height);
+            _controller = new ImGuiController(this);
            
             scene.cursorRaycastDist = 10f;
             scene.SetBackgroundColor(_bgColor);
 
-            KeyPress += OnKeyPress;
-            MouseDown += OnMousePress;
-            MouseMove += OnMouseMove;
-            MouseUp += OnMouseRelease;
-
-            CursorVisible = true;
             VSync = VSyncMode.On;
 
             GL.ClearColor(_bgColor);
             GL.PointSize(5);
-            base.OnLoad(e);
         }
 
-        protected override void OnUnload(EventArgs e)
+        protected override void OnUnload()
         {
+            base.OnUnload();
+
             var scene = Scene.Instance;
 
             scene.Unload();
-
-            base.OnUnload(e);
         }
 
         protected override void OnRenderFrame(FrameEventArgs e)
@@ -740,16 +736,15 @@ namespace SimpleCAD.Source
             base.OnRenderFrame(e);
         }
 
-        protected override void OnResize(EventArgs e)
+        protected override void OnResize(ResizeEventArgs e)
         {
+            base.OnResize(e);
+
             var scene = Scene.Instance;
 
-            GL.Viewport(0, 0, Width, Height);
+            GL.Viewport(0, 0, Size.X, Size.Y);
 
-            scene.camera.ChangeAspect(Width, Height);
-            _controller.WindowResized(Width, Height);
-
-            base.OnResize(e);
+            scene.camera.ChangeAspect(Size);
         }
 
         private struct GUIState

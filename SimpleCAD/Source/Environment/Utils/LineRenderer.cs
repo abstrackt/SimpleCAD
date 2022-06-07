@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using OpenTK;
 using OpenTK.Graphics.OpenGL4;
+using OpenTK.Mathematics;
 using SimpleCAD.Source.Geometry;
 using SimpleCAD.Source.Utils;
 

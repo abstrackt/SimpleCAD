@@ -1,6 +1,7 @@
 ﻿using OpenTK;
 using OpenTK.Graphics;
 using OpenTK.Graphics.OpenGL4;
+using OpenTK.Mathematics;
 using System;
 using System.Collections.Generic;
 
@@ -65,10 +66,10 @@ namespace SimpleCAD.Source.Environment
             _ortho = ortho;
         }
 
-        public void ChangeAspect(float width, float height)
+        public void ChangeAspect(Vector2 size)
         {
-            _width = width;
-            _height = height;
+            _width = size.X;
+            _height = size.Y;
             _aspect = _width/_height;
         }
 

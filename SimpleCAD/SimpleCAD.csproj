@@ -1,168 +1,20 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+<Project Sdk="Microsoft.NET.Sdk">
+
   <PropertyGroup>
-    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
-    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{4F7780A4-29B9-4CD0-9827-08A37CC9D07B}</ProjectGuid>
     <OutputType>Exe</OutputType>
-    <RootNamespace>SimpleCAD</RootNamespace>
-    <AssemblyName>SimpleCAD</AssemblyName>
-    <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
-    <FileAlignment>512</FileAlignment>
-    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
-    <Deterministic>true</Deterministic>
-    <NuGetPackageImportStamp>
-    </NuGetPackageImportStamp>
+    <TargetFramework>net6.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <PlatformTarget>AnyCPU</PlatformTarget>
-    <DebugSymbols>true</DebugSymbols>
-    <DebugType>full</DebugType>
-    <Optimize>false</Optimize>
-    <OutputPath>bin\Debug\</OutputPath>
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <PlatformTarget>AnyCPU</PlatformTarget>
-    <DebugType>pdbonly</DebugType>
-    <Optimize>true</Optimize>
-    <OutputPath>bin\Release\</OutputPath>
-    <DefineConstants>TRACE</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
-  </PropertyGroup>
+
   <ItemGroup>
-    <None Include="App.config" />
-    <None Include="OpenTK.dll.config" />
-    <None Include="packages.config" />
+    <PackageReference Include="ImGui.NET" Version="1.87.3" />
+    <PackageReference Include="OpenTK" Version="4.7.2" />
+    <PackageReference Include="System.Drawing.Common" Version="6.0.0" />
   </ItemGroup>
-  <ItemGroup>
-    <Reference Include="ImGui.NET, Version=1.78.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>packages\ImGui.NET.1.78.0\lib\netstandard2.0\ImGui.NET.dll</HintPath>
-    </Reference>
-    <Reference Include="OpenTK, Version=3.3.1.0, Culture=neutral, PublicKeyToken=bad199fe84eb3df4, processorArchitecture=MSIL">
-      <HintPath>packages\OpenTK.3.3.1\lib\net20\OpenTK.dll</HintPath>
-    </Reference>
-    <Reference Include="System" />
-    <Reference Include="System.Buffers, Version=4.0.2.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
-      <HintPath>packages\System.Buffers.4.4.0\lib\netstandard2.0\System.Buffers.dll</HintPath>
-    </Reference>
-    <Reference Include="System.ComponentModel.Composition" />
-    <Reference Include="System.Drawing" />
-    <Reference Include="System.IO.Compression.FileSystem" />
-    <Reference Include="System.Numerics" />
-    <Reference Include="System.Numerics.Vectors, Version=4.1.3.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
-      <HintPath>packages\System.Numerics.Vectors.4.4.0\lib\net46\System.Numerics.Vectors.dll</HintPath>
-    </Reference>
-    <Reference Include="System.Runtime.CompilerServices.Unsafe, Version=4.0.3.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
-      <HintPath>packages\System.Runtime.CompilerServices.Unsafe.4.4.0\lib\netstandard2.0\System.Runtime.CompilerServices.Unsafe.dll</HintPath>
-    </Reference>
-    <Reference Include="System.Xml" />
-    <Reference Include="System.Xml.Linq" />
-  </ItemGroup>
-  <ItemGroup />
-  <ItemGroup>
-    <Compile Include="Source\AppWindow.cs" />
-    <Compile Include="Source\Environment\Elements\SurfaceSceneModel.cs" />
-    <Compile Include="Source\Environment\Elements\ControlPointSceneModel.cs" />
-    <Compile Include="Source\Environment\Elements\BezierCurveSceneModel.cs" />
-    <Compile Include="Source\Environment\Elements\SceneModel.cs" />
-    <Compile Include="Source\Environment\Elements\VirtualPoint.cs" />
-    <Compile Include="Source\Environment\Utils\Grid.cs" />
-    <Compile Include="Source\Environment\RenderableElement.cs" />
-    <Compile Include="Source\Environment\Utils\Gizmo.cs" />
-    <Compile Include="Source\Environment\Utils\LineRenderer.cs" />
-    <Compile Include="Source\Geometry\Impl\AdaptiveCurve.cs" />
-    <Compile Include="Source\Geometry\Impl\C0BezierSurface.cs" />
-    <Compile Include="Source\Geometry\Impl\C2SplineSurface.cs" />
-    <Compile Include="Source\Geometry\Impl\Surface.cs" />
-    <Compile Include="Source\Geometry\Impl\C0BezierCurve.cs" />
-    <Compile Include="Source\Geometry\Impl\C2InterpolatingCurve.cs" />
-    <Compile Include="Source\Geometry\Impl\C2SplineCurve.cs" />
-    <Compile Include="Source\Geometry\Impl\CursorLines.cs" />
-    <Compile Include="Source\Geometry\Impl\GridLines.cs" />
-    <Compile Include="Source\Geometry\Impl\LineSet.cs" />
-    <Compile Include="Source\Geometry\Impl\Point.cs" />
-    <Compile Include="Source\Geometry\Impl\Quad.cs" />
-    <Compile Include="Source\Geometry\Impl\Torus.cs" />
-    <Compile Include="Source\Geometry\Interfaces\IColorable.cs" />
-    <Compile Include="Source\Geometry\Interfaces\IControlPointGeometry.cs" />
-    <Compile Include="Source\Geometry\Interfaces\IGeometry.cs" />
-    <Compile Include="Source\Environment\Camera.cs" />
-    <Compile Include="Source\Environment\Scene.cs" />
-    <Compile Include="Source\Environment\Elements\BasicSceneModel.cs" />
-    <Compile Include="Source\GUI\ISceneGUIElement.cs" />
-    <Compile Include="Source\GUI\ImGuiController.cs" />
-    <Compile Include="Source\GUI\InputWrapper.cs" />
-    <Compile Include="Source\Program.cs" />
-    <Compile Include="Source\Selection\SceneRaycaster.cs" />
-    <Compile Include="Source\Utils\ColorPalette.cs" />
-    <Compile Include="Source\Utils\GUIShader.cs" />
-    <Compile Include="Source\Selection\SelectionManager.cs" />
-    <Compile Include="Source\Utils\Line.cs" />
-    <Compile Include="Source\Utils\MathUtils.cs" />
-    <Compile Include="Source\Utils\Texture.cs" />
-    <Compile Include="Source\Utils\Util.cs" />
-    <Compile Include="Source\Utils\Vertex.cs" />
-    <Compile Include="Source\Utils\Shader.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Source\Shaders\splineSurface.tesc" />
-    <None Include="Source\Shaders\splineSurface.frag" />
-    <None Include="Source\Shaders\splineSurface.tese" />
-    <None Include="Source\Shaders\splineSurface.vert" />
-    <None Include="Source\Shaders\bezierCurve.frag" />
-    <None Include="Source\Shaders\bezierCurve.tesc">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <Content Include="Source\Shaders\bezierCurve.tese">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="Source\Shaders\bezierCurve.vert">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <None Include="Source\Shaders\bezierSurface.frag" />
-    <None Include="Source\Shaders\bezierSurface.tesc" />
-    <None Include="Source\Shaders\bezierSurface.tese" />
-    <None Include="Source\Shaders\bezierSurface.vert" />
-    <None Include="Source\Shaders\gridShader.vert">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Include="Source\Shaders\shader.vert">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Source\Shaders\shader.frag">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-  </ItemGroup>
-  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
-  <PropertyGroup>
-    <PostBuildEvent>xcopy /y $(ProjectDir)Source\Shaders\shader.vert  $(ProjectDir)$(OutDir)
-xcopy /y $(ProjectDir)Source\Shaders\shader.frag  $(ProjectDir)$(OutDir)
-xcopy /y $(ProjectDir)Source\Shaders\gridShader.vert  $(ProjectDir)$(OutDir)
-xcopy /y $(ProjectDir)Source\Shaders\bezierCurve.vert  $(ProjectDir)$(OutDir)
-xcopy /y $(ProjectDir)Source\Shaders\bezierCurve.frag  $(ProjectDir)$(OutDir)
-xcopy /y $(ProjectDir)Source\Shaders\bezierCurve.tesc  $(ProjectDir)$(OutDir)
-xcopy /y $(ProjectDir)Source\Shaders\bezierCurve.tese  $(ProjectDir)$(OutDir)
-xcopy /y $(ProjectDir)Source\Shaders\bezierSurface.vert  $(ProjectDir)$(OutDir)
-xcopy /y $(ProjectDir)Source\Shaders\bezierSurface.frag  $(ProjectDir)$(OutDir)
-xcopy /y $(ProjectDir)Source\Shaders\bezierSurface.tesc  $(ProjectDir)$(OutDir)
-xcopy /y $(ProjectDir)Source\Shaders\bezierSurface.tese  $(ProjectDir)$(OutDir)
-xcopy /y $(ProjectDir)Source\Shaders\splineSurface.vert  $(ProjectDir)$(OutDir)
-xcopy /y $(ProjectDir)Source\Shaders\splineSurface.frag  $(ProjectDir)$(OutDir)
-xcopy /y $(ProjectDir)Source\Shaders\splineSurface.tesc  $(ProjectDir)$(OutDir)
-xcopy /y $(ProjectDir)Source\Shaders\splineSurface.tese  $(ProjectDir)$(OutDir)</PostBuildEvent>
-  </PropertyGroup>
-  <Import Project="packages\ImGui.NET.1.78.0\build\net40\ImGui.NET.targets" Condition="Exists('packages\ImGui.NET.1.78.0\build\net40\ImGui.NET.targets')" />
-  <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
-    <PropertyGroup>
-      <ErrorText>This project references NuGet package(s) that are missing on this computer. Use NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
-    </PropertyGroup>
-    <Error Condition="!Exists('packages\ImGui.NET.1.78.0\build\net40\ImGui.NET.targets')" Text="$([System.String]::Format('$(ErrorText)', 'packages\ImGui.NET.1.78.0\build\net40\ImGui.NET.targets'))" />
+
+  <Target Name="PostBuild" AfterTargets="PostBuildEvent">
+    <Exec Command="xcopy /y $(ProjectDir)Source\Shaders\shader.vert  $(ProjectDir)$(OutDir)&#xD;&#xA;xcopy /y $(ProjectDir)Source\Shaders\shader.frag  $(ProjectDir)$(OutDir)&#xD;&#xA;xcopy /y $(ProjectDir)Source\Shaders\gridShader.vert  $(ProjectDir)$(OutDir)&#xD;&#xA;xcopy /y $(ProjectDir)Source\Shaders\bezierCurve.vert  $(ProjectDir)$(OutDir)&#xD;&#xA;xcopy /y $(ProjectDir)Source\Shaders\bezierCurve.frag  $(ProjectDir)$(OutDir)&#xD;&#xA;xcopy /y $(ProjectDir)Source\Shaders\bezierCurve.tesc  $(ProjectDir)$(OutDir)&#xD;&#xA;xcopy /y $(ProjectDir)Source\Shaders\bezierCurve.tese  $(ProjectDir)$(OutDir)&#xD;&#xA;xcopy /y $(ProjectDir)Source\Shaders\bezierSurface.vert  $(ProjectDir)$(OutDir)&#xD;&#xA;xcopy /y $(ProjectDir)Source\Shaders\bezierSurface.frag  $(ProjectDir)$(OutDir)&#xD;&#xA;xcopy /y $(ProjectDir)Source\Shaders\bezierSurface.tesc  $(ProjectDir)$(OutDir)&#xD;&#xA;xcopy /y $(ProjectDir)Source\Shaders\bezierSurface.tese  $(ProjectDir)$(OutDir)&#xD;&#xA;xcopy /y $(ProjectDir)Source\Shaders\splineSurface.vert  $(ProjectDir)$(OutDir)&#xD;&#xA;xcopy /y $(ProjectDir)Source\Shaders\splineSurface.frag  $(ProjectDir)$(OutDir)&#xD;&#xA;xcopy /y $(ProjectDir)Source\Shaders\splineSurface.tesc  $(ProjectDir)$(OutDir)&#xD;&#xA;xcopy /y $(ProjectDir)Source\Shaders\splineSurface.tese  $(ProjectDir)$(OutDir)" />
   </Target>
+
 </Project>

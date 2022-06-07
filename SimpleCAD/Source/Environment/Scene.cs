@@ -5,6 +5,7 @@ using System;
 using SimpleCAD.Source.Geometry;
 using SimpleCAD.Source.Utils;
 using OpenTK.Graphics.OpenGL4;
+using OpenTK.Mathematics;
 
 namespace SimpleCAD.Source.Environment
 {

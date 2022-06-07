@@ -1,5 +1,6 @@
 ﻿using OpenTK;
 using OpenTK.Graphics;
+using OpenTK.Mathematics;
 using SimpleCAD.Source.Environment;
 using SimpleCAD.Source.Utils;
 using System;

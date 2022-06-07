@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using ImGuiNET;
 using OpenTK;
 using OpenTK.Graphics;
+using OpenTK.Mathematics;
 using SimpleCAD.Source.GUI;
 using SimpleCAD.Source.Utils;
 
