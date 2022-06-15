@@ -1,12 +1,14 @@
 ﻿using OpenTK;
 using OpenTK.Graphics;
 using OpenTK.Mathematics;
+using SharpSceneSerializer.DTOs.Enums;
 using SimpleCAD.Source.Utils;
 
 namespace SimpleCAD.Source.Geometry
 {
     public class GridLines : IGeometry
     {
+
         public (Vertex[] vertices, uint[] indices) GetMesh()
         {
             int n = 40;

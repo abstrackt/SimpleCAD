@@ -16,14 +16,13 @@ namespace SimpleCAD.Source.Environment
     // Represents a parented control point that can affect the parent scene model
     public class VirtualPoint : RenderableElement, ISceneGUIElement
     {
-        public ControlPointSceneModel parent;
+        public ComplexSceneModel parent;
         public Vector3 Position => _pos;
-        protected override IGeometry Geometry { get; set; }
 
         private Vector3 _pos;
         private Matrix4 _transform;
 
-        public VirtualPoint(Color4 color, ControlPointSceneModel model) : base(new Point(color))
+        public VirtualPoint(Color4 color, ComplexSceneModel model) : base(new Point(color))
         {
             _transform = Matrix4.Identity;
             type = PrimitiveType.Points;

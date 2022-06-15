@@ -4,20 +4,24 @@ using ImGuiNET;
 using OpenTK;
 using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
+using SharpSceneSerializer.DTOs.Interfaces;
 using SimpleCAD.Source.Geometry;
 using SimpleCAD.Source.GUI;
 using SimpleCAD.Source.Utils;
+
 
 namespace SimpleCAD.Source.Environment
 {
     // Represents a model defined by a mesh controlled by external control points.
     // It also modifies render behavior to use tesselation as a default way of drawing geometry.
-    public abstract class ControlPointSceneModel : SceneModel, ISceneGUIElement
+    public abstract class ComplexSceneModel : SceneModel, ISceneGUIElement
     {
         public List<VirtualPoint> VirtualPoints => new List<VirtualPoint>(_virtualPoints);
-        public List<BasicSceneModel> ControlPoints => new List<BasicSceneModel>(_controlPoints);
+        public List<PointSceneModel> ControlPoints => new List<PointSceneModel>(_controlPoints);
+        public override Vector3 Position => Vector3.Zero;
+        public override Matrix4 Transform => Matrix4.Identity;
 
-        private List<BasicSceneModel> _controlPoints;
+        private List<PointSceneModel> _controlPoints;
         private List<VirtualPoint> _virtualPoints;
 
         private IControlPointGeometry _geometry;
@@ -29,42 +33,22 @@ namespace SimpleCAD.Source.Environment
         public bool Immutable => _immutable;
         public bool RemovePoints => _removePoints;
 
-        protected override IGeometry Geometry {
-            get 
-            { 
-                return _geometry; 
-            }
-            set 
-            {
-                if (value is IControlPointGeometry geometry)
-                {
-                    _geometry = geometry;
-                }
-                else
-                {
-                    throw new InvalidOperationException("Cannot assign non-control point geometry to a control point model");
-                }
-            }
-        }
-
         // Not nice to have this here but whatever, we should probably
         // devise some better way to hold UI state later on.
         private bool _controlPointSelectionListVisible;
 
         // Create control point model using currently selected points.
-        public ControlPointSceneModel(IControlPointGeometry geometry, string name, PrimitiveType primitives, bool immutable = false, bool removePoints = false) : base(geometry, name, primitives)
+        public ComplexSceneModel(IControlPointGeometry geometry, string name, PrimitiveType primitives, bool immutable = false, bool removePoints = false) : base(geometry, name, primitives)
         {
-            _controlPoints = new List<BasicSceneModel>();
+            _geometry = geometry;
+            _controlPoints = new List<PointSceneModel>();
             _virtualPoints = new List<VirtualPoint>();
             _immutable = immutable;
             _removePoints = removePoints;
         }
 
-        public void SetPoints(List<BasicSceneModel> points, bool force = false)
+        public void SetPoints(List<PointSceneModel> points, bool force = false)
         {
-            if (!points.TrueForAll(x => x.IsControlPoint))
-                throw new InvalidOperationException("Cannot use non-control points for control point models");
-
             if (!Immutable || force)
             {
                 foreach (var model in points)
@@ -74,7 +58,7 @@ namespace SimpleCAD.Source.Environment
             }
         }
 
-        public void RemovePoint(BasicSceneModel model)
+        public void RemovePoint(PointSceneModel model)
         {
             if (!Immutable)
             {
@@ -83,14 +67,22 @@ namespace SimpleCAD.Source.Environment
             }
         }
 
-        public void AddPoint(BasicSceneModel model, bool force = false)
+        public void AddPoint(PointSceneModel model, bool force = false)
         {
             if (!Immutable || force)
             {
-                if (model.IsControlPoint)
+                _controlPoints.Add(model); 
+            }
+        }
+
+        public void ReplacePoint(PointSceneModel oldPoint, PointSceneModel newPoint)
+        {
+            for (int i = 0; i < _controlPoints.Count; i++)
+            {
+                if (_controlPoints[i] == oldPoint)
                 {
-                    _controlPoints.Add(model);
-                }
+                    _controlPoints[i] = newPoint;
+                }  
             }
         }
 
@@ -141,6 +133,14 @@ namespace SimpleCAD.Source.Environment
             }
         }
 
+        public override void Translate(Vector3 translation, bool additive = false)
+        {
+            foreach (var point in _controlPoints)
+            {
+                point.Translate(translation, additive);
+            }
+        }
+
         protected override void BeforeRendering()
         {
             shader.SetMatrix4("model", Matrix4.Identity);
@@ -176,6 +176,14 @@ namespace SimpleCAD.Source.Environment
         {
             ImGui.Text(Name);
 
+            if (ImGui.Button("Select All Points"))
+            {
+                SelectionManager.Instance.Clear();
+                SelectionManager.Instance.Remove(this);
+                foreach (var point in ControlPoints)
+                    SelectionManager.Instance.Add(point);
+            }
+
             ImGui.Separator();
 
             if (_geometry is ISceneGUIElement element)
@@ -209,10 +217,10 @@ namespace SimpleCAD.Source.Environment
                 {
                     var scene = Scene.Instance;
 
-                    for (int i = 0; i < scene.basicModels.Count; i++)
+                    for (int i = 0; i < scene.pointModels.Count; i++)
                     {
-                        var model = scene.basicModels[i];
-                        if (model.IsControlPoint && !_controlPoints.Contains(model))
+                        var model = scene.pointModels[i];
+                        if (!_controlPoints.Contains(model))
                         {
                             if (ImGui.Button(model.Name, new System.Numerics.Vector2(100, 20)))
                             {
@@ -237,5 +245,7 @@ namespace SimpleCAD.Source.Environment
                 }
             }
         }
+
+        public abstract bool TrySerialize(out IGeometryObject serialized);
     }
 }

@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using ImGuiNET;
 using OpenTK;
 using OpenTK.Mathematics;
+using SharpSceneSerializer.DTOs.Enums;
 using SimpleCAD.Source.GUI;
 using SimpleCAD.Source.Utils;
 

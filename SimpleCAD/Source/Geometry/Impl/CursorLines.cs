@@ -1,12 +1,14 @@
 ﻿using OpenTK;
 using OpenTK.Graphics;
 using OpenTK.Mathematics;
+using SharpSceneSerializer.DTOs.Enums;
 using SimpleCAD.Source.Utils;
 
 namespace SimpleCAD.Source.Geometry
 {
     public class CursorLines : IGeometry
     {
+
         public (Vertex[] vertices, uint[] indices) GetMesh()
         {
             Vertex[] verts = new Vertex[6];

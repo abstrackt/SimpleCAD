@@ -4,6 +4,7 @@ using ImGuiNET;
 using OpenTK;
 using OpenTK.Graphics;
 using OpenTK.Mathematics;
+using SharpSceneSerializer.DTOs.Enums;
 using SimpleCAD.Source.GUI;
 using SimpleCAD.Source.Utils;
 
@@ -11,7 +12,7 @@ namespace SimpleCAD.Source.Geometry
 {
     class Torus : IGeometry, ISceneGUIElement, IColorable
     {
-        public int resolution;
+        public int resU, resV;
         public float R, r;
         public Color4 color;
 
@@ -19,9 +20,12 @@ namespace SimpleCAD.Source.Geometry
 
         private bool _changed = false;
 
-        public Torus(int resolution, float R, float r, Color4 color)
+        public ObjectType DTOType => ObjectType.torus;
+
+        public Torus(int resU, int resV, float R, float r, Color4 color)
         {
-            this.resolution = Math.Max(resolution, MinimumResolution);
+            this.resU = Math.Max(resU, MinimumResolution);
+            this.resV = Math.Max(resV, MinimumResolution);
             this.R = R;
             this.r = r;
             this.color = color;
@@ -29,7 +33,7 @@ namespace SimpleCAD.Source.Geometry
 
         public (Vertex[] vertices, uint[] indices) GetMesh() 
         {
-            int nVerts = resolution * resolution;
+            int nVerts = resU * resV;
             int nPrimitives = nVerts * 2;
             int nIndices = nPrimitives * 3;
 
@@ -38,25 +42,29 @@ namespace SimpleCAD.Source.Geometry
             List<Vertex> verticesList = new List<Vertex>(nVerts);
             List<uint> indicesList = new List<uint>(nIndices);
 
-            float delta = 2 * pi / resolution;
+            float deltaU = 2 * pi / resU;
+            float deltaV = 2 * pi / resV;
 
             float x = 0;
             float y = 0;
             float z = 0;
 
-            for (int i = 0; i < resolution; i++)
+            float rInner = (R - r) / 2;
+            float rMiddle = R - rInner;
+
+            for (int i = 0; i < resU; i++)
             {
-                var cosSeg = (float)Math.Cos(i * delta);
-                var sinSeg = (float)Math.Sin(i * delta);
+                var cosSeg = (float)Math.Cos(i * deltaU);
+                var sinSeg = (float)Math.Sin(i * deltaU);
 
-                for (int j = 0; j < resolution; j++)
+                for (int j = 0; j < resV; j++)
                 {
-                    var cosTube = (float)Math.Cos(j * delta);
-                    var sinTube = (float)Math.Sin(j * delta);
+                    var cosTube = (float)Math.Cos(j * deltaV);
+                    var sinTube = (float)Math.Sin(j * deltaV);
 
-                    x = (R + r * cosTube) * cosSeg;
-                    y = r * sinTube;
-                    z = (R + r * cosTube) * sinSeg;
+                    x = (rMiddle + rInner * cosTube) * cosSeg;
+                    y = rInner * sinTube;
+                    z = (rMiddle + rInner * cosTube) * sinSeg;
 
                     var v = new Vertex(new Vector3(x, y, z), color);
 
@@ -64,18 +72,18 @@ namespace SimpleCAD.Source.Geometry
                 }
             }
 
-            for (int i = 0; i < resolution; i++)
+            for (int i = 0; i < resU; i++)
             {
-                int n = (i + 1) % resolution;
+                int n = (i + 1) % resU;
 
-                for (int j = 0; j < resolution; j++)
+                for (int j = 0; j < resV; j++)
                 {
-                    int m = (j + 1) % resolution;
+                    int m = (j + 1) % resV;
 
-                    var i1 = i * resolution + j;
-                    var i2 = i * resolution + m;
-                    var i3 = n * resolution + m;
-                    var i4 = n * resolution + j;
+                    var i1 = i * resV + j;
+                    var i2 = i * resV + m;
+                    var i3 = n * resV + m;
+                    var i4 = n * resV + j;
 
                     indicesList.Add((uint)i1);
                     indicesList.Add((uint)i2);
@@ -99,7 +107,12 @@ namespace SimpleCAD.Source.Geometry
         {
             ImGui.Text("Mesh parameters");
             ImGui.PushItemWidth(150);
-            if (ImGui.SliderInt("Mesh resolution", ref resolution, 3, 400, null, ImGuiSliderFlags.Logarithmic))
+            if (ImGui.SliderInt("Resolution (U)", ref resU, 3, 400, null, ImGuiSliderFlags.Logarithmic))
+            {
+                _changed = true;
+            }
+
+            if (ImGui.SliderInt("Resolution (V)", ref resV, 3, 400, null, ImGuiSliderFlags.Logarithmic))
             {
                 _changed = true;
             }

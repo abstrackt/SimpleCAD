@@ -22,7 +22,7 @@ namespace SimpleCAD.Source.Environment
 
         private string _vertPath, _fragPath, _tessControlPath, _tessEvalPath;
 
-        protected abstract IGeometry Geometry { get; set; }
+        protected IGeometry Geometry { get; private set; }
 
         public RenderableElement(IGeometry geometry) 
         {
@@ -63,6 +63,22 @@ namespace SimpleCAD.Source.Environment
             ReloadShader();
         }
 
+        // Set shader constants, can be overriden if need be.
+        public virtual void Render()
+        {
+            BeforeRendering();
+            shader.Use();
+            GL.BindVertexArray(_vertexArray);
+            GL.DrawElements(type, _indexCount, DrawElementsType.UnsignedInt, (IntPtr)0);
+            AfterRendering();
+        }
+
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
         private void ReloadShader()
         {
             shader = new Shader(_vertPath, _fragPath, _tessControlPath, _tessEvalPath);
@@ -101,22 +117,6 @@ namespace SimpleCAD.Source.Environment
         protected virtual void BeforeRendering() { }
 
         protected virtual void AfterRendering() { }
-
-        // Set shader constants, can be overriden if need be.
-        public virtual void Render()
-        {
-            BeforeRendering();
-            shader.Use();
-            GL.BindVertexArray(_vertexArray);
-            GL.DrawElements(type, _indexCount, DrawElementsType.UnsignedInt, (IntPtr)0);
-            AfterRendering();
-        }
-
-        public void Dispose()
-        {
-            Dispose(true);
-            GC.SuppressFinalize(this);
-        }
 
         protected virtual void Dispose(bool disposing)
         {

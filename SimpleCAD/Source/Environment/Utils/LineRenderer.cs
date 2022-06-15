@@ -13,26 +13,9 @@ namespace SimpleCAD.Source.Environment
     {
         private LineSet _lines;
 
-        protected override IGeometry Geometry { 
-            get 
-            { 
-                return _lines; 
-            }
-            set 
-            {
-                if (value is LineSet geometry)
-                {
-                    _lines = geometry;
-                }
-                else
-                {
-                    throw new InvalidOperationException("Invalid geometry assigned to LineRenderer");
-                }
-            }
-        }
-
-        public LineRenderer() : base(new LineSet()) 
+        public LineRenderer(LineSet lineSet) : base(lineSet)
         {
+            _lines = lineSet;
             type = PrimitiveType.Lines;
         }
 

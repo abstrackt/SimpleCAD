@@ -1,8 +1,10 @@
-﻿using OpenTK;
-using OpenTK.Graphics;
-using OpenTK.Mathematics;
-using SimpleCAD.Source.GUI;
+﻿using OpenTK.Mathematics;
+using SharpSceneSerializer.DTOs.Enums;
+using SharpSceneSerializer.DTOs.Interfaces;
 using SimpleCAD.Source.Utils;
+using Geom = SharpSceneSerializer.DTOs.GeometryObjects;
+using Enums = SharpSceneSerializer.DTOs.Enums;
+using Types = SharpSceneSerializer.DTOs.Types;
 
 namespace SimpleCAD.Source.Geometry
 {

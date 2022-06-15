@@ -5,12 +5,14 @@ using System.Text;
 using System.Threading.Tasks;
 using OpenTK;
 using OpenTK.Graphics;
+using SharpSceneSerializer.DTOs.Enums;
 using SimpleCAD.Source.Utils;
 
 namespace SimpleCAD.Source.Geometry
 {
     public class LineSet : IGeometry
     {
+
         private List<Vertex> _vertexCache;
         private List<uint> _indexCache;
 

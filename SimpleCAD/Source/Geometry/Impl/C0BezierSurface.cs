@@ -1,6 +1,7 @@
 ﻿using ImGuiNET;
 using OpenTK;
 using OpenTK.Mathematics;
+using SharpSceneSerializer.DTOs.Enums;
 using SimpleCAD.Source.GUI;
 using SimpleCAD.Source.Utils;
 using System;
@@ -26,10 +27,10 @@ namespace SimpleCAD.Source.Geometry
 
         private int _tessU, _tessV;
 
-        public C0BezierSurface(int patchesU, int patchesV, bool wrapU) : base(patchesU, patchesV, wrapU) 
+        public C0BezierSurface(int patchesU, int patchesV, bool wrapU, int tessU = 4, int tessV = 4) : base(patchesU, patchesV, wrapU) 
         {
-            _tessU = 4;
-            _tessV = 4;
+            _tessU = tessU;
+            _tessV = tessV;
         }
 
         public override List<Line> GetLines()

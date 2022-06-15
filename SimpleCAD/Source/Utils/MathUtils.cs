@@ -5,11 +5,61 @@ using System.Text;
 using System.Threading.Tasks;
 using OpenTK;
 using OpenTK.Mathematics;
+using Geom = SharpSceneSerializer.DTOs.GeometryObjects;
+using Enums = SharpSceneSerializer.DTOs.Enums;
+using Types = SharpSceneSerializer.DTOs.Types;
 
 namespace SimpleCAD.Source.Utils
 {
     public static class MathUtils
     {
+        public static Types.Float3 AsFloat3(this Vector3 v)
+        {
+            return new Types.Float3(v.X, v.Y, v.Z);
+        }
+
+        public static Vector3 AsVector3(this Types.Float3 v)
+        {
+            return new Vector3(v.X, v.Y, v.Z);
+        }
+
+        public static (Vector3 translation, Vector3 xyzRot, Vector3 scale) DecomposeMatrix(Matrix4 trs)
+        {
+            var t = trs.Row3.Xyz;
+
+            var s = new Vector3(trs.Row0.Xyz.Length, trs.Row1.Xyz.Length, trs.Row2.Xyz.Length);
+
+            var R = new Matrix3(trs.Row0.Xyz.Normalized(), trs.Row1.Xyz.Normalized(), trs.Row2.Xyz.Normalized());
+
+            var euler = Vector3.Zero;
+
+            R.Transpose();
+
+            if (R.M13 < +1)
+            {
+                if (R.M13 > -1)
+                {
+                    euler.Y = (float)Math.Asin(R.M13);
+                    euler.X = (float)Math.Atan2(-R.M23, R.M33);
+                    euler.Z = (float)Math.Atan2(-R.M12, R.M11);
+                }
+                else
+                {
+                    euler.Y = (float)(-Math.PI / 2);
+                    euler.X = (float)Math.Atan2(R.M21, R.M22);
+                    euler.Z = 0;
+                }
+            }
+            else
+            {
+                euler.Y = (float)(Math.PI / 2);
+                euler.X = (float)Math.Atan2(R.M21, R.M22);
+                euler.Z = 0;
+            }
+
+            return (t, euler, s);
+        }
+
         public static Vector3 Rad2Deg(Vector3 angles)
         {
             return new Vector3(angles.X * 180f / (float)Math.PI, angles.Y * 180f / (float)Math.PI, angles.Z * 180f / (float)Math.PI);

@@ -8,11 +8,9 @@ namespace SimpleCAD.Source.Environment
 {
     public class Grid : RenderableElement
     {
-        private Matrix4 _model, _view, _proj;
+        private Matrix4 _model;
         private float _falloff;
         private Color4 _bg;
-
-        protected override IGeometry Geometry { get; set; }
 
         public Grid() : base(new GridLines()) 
         {

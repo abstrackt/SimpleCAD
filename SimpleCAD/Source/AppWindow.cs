@@ -1,10 +1,6 @@
-﻿using System;
-using System.Text;
-using ImGuiNET;
-using OpenTK;
-using OpenTK.Graphics;
+﻿using ImGuiNET;
+using System;
 using OpenTK.Graphics.OpenGL4;
-using OpenTK.Input;
 using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;
 using OpenTK.Windowing.Desktop;
@@ -14,6 +10,8 @@ using SimpleCAD.Source.Geometry;
 using SimpleCAD.Source.GUI;
 using SimpleCAD.Source.Selection;
 using SimpleCAD.Source.Utils;
+using SimpleCAD.Source.Serialization;
+using SharpSceneSerializer;
 
 namespace SimpleCAD.Source
 {
@@ -65,15 +63,29 @@ namespace SimpleCAD.Source
         
         private void DrawMenuBar()
         {
+            bool openLoad = false;
+            bool openSave = false;
+
             if (ImGui.BeginMainMenuBar())
             {
                 if (ImGui.BeginMenu("File"))
                 {
+                    
+                    if (ImGui.MenuItem("Save as", "Ctrl+S"))
+                    {
+                        openSave = true;
+                    }
+
+                    if (ImGui.MenuItem("Load", "Ctrl+L"))
+                    {
+                        openLoad = true;
+                    }
+
                     if (ImGui.MenuItem("Exit editor", "Esc"))
                     {
                         this.Close();
                     }
-
+                    
                     ImGui.EndMenu();
                 }
 
@@ -91,6 +103,49 @@ namespace SimpleCAD.Source
                 }
 
                 ImGui.EndMainMenuBar();
+
+                if (openSave)
+                    ImGui.OpenPopup("Save File");
+
+                if (openLoad)
+                    ImGui.OpenPopup("Load File");
+
+                var path = System.Environment.GetFolderPath(System.Environment.SpecialFolder.Desktop);
+
+                if (ImGui.BeginPopup("Save File"))
+                {
+                    var picker = FilePicker.GetFilePicker(this, path, ".json", false, true);
+                    if (picker.Draw())
+                    {
+                        if (picker.SelectedFile != null)
+                        {
+                            var data = SceneSerializationUtils.ConvertTo();
+                            SceneSerializer.Serialize(data, picker.SelectedFile);
+                        }
+                        FilePicker.RemoveFilePicker(this);
+                    }
+                    ImGui.EndPopup();
+                }
+
+                if (ImGui.BeginPopup("Load File"))
+                {
+                    var picker = FilePicker.GetFilePicker(this, path, ".json");
+                    if (picker.Draw())
+                    {
+                        if (picker.SelectedFile != null)
+                        {
+                            (var success, var data) = SceneSerializer.Deserialize(picker.SelectedFile, AppContext.BaseDirectory + "/schema.json");
+
+                            if (success)
+                            {
+                                SceneSerializationUtils.ConvertFrom(data);
+                            }
+                        }
+                        FilePicker.RemoveFilePicker(this);
+                    }
+                    ImGui.EndPopup();
+                }
+
             }
         }
 
@@ -147,7 +202,7 @@ namespace SimpleCAD.Source
             }
         }
 
-        private void DrawBasicModelGUI(BasicSceneModel model, int index)
+        private void DrawPointModelGUI(PointSceneModel model, int index)
         {
             var scene = Scene.Instance;
             var selection = SelectionManager.Instance;
@@ -160,6 +215,38 @@ namespace SimpleCAD.Source
                 }
                 ImGui.SameLine();
             }
+
+            if (!selection.IsSelected(model))
+            {
+                if (ImGui.Button("Select##" + index))
+                {
+                    selection.Add(model);
+                }
+            }
+            else
+            {
+                if (ImGui.Button("Deselect##" + index))
+                {
+                    selection.Remove(model);
+                }
+            }
+
+            ImGui.SameLine();
+            ImGui.InputText("##SceneModel" + index, model.name, SceneModel.MAX_NAME_LEN);
+
+            ImGui.Separator();
+        }
+
+        private void DrawBasicModelGUI(SimpleSceneModel model, int index)
+        {
+            var scene = Scene.Instance;
+            var selection = SelectionManager.Instance;
+
+            if (ImGui.Button("Delete##" + index))
+            {
+                scene.RemoveModel(model);
+            }
+            ImGui.SameLine();
             
             if (!selection.IsSelected(model))
             {
@@ -182,7 +269,7 @@ namespace SimpleCAD.Source
             ImGui.Separator();
         }
 
-        private void DrawComplexModelGUI(ControlPointSceneModel model, int index)
+        private void DrawComplexModelGUI(ComplexSceneModel model, int index)
         {
             var scene = Scene.Instance;
             var selection = SelectionManager.Instance;
@@ -232,10 +319,17 @@ namespace SimpleCAD.Source
 
                 ImGui.Separator();
 
+                if (_uiState.showControlPoints)
+                {
+                    for (int i = 0; i < scene.pointModels.Count; i++)
+                    {
+                        DrawPointModelGUI(scene.pointModels[i], i);
+                    }
+                }
+
                 for (int i = 0; i < scene.basicModels.Count; i++)
                 {
-                    if (!scene.basicModels[i].IsControlPoint || _uiState.showControlPoints)
-                        DrawBasicModelGUI(scene.basicModels[i], i);
+                    DrawBasicModelGUI(scene.basicModels[i], i);
                 }
 
                 for (int i = 0; i < scene.complexModels.Count; i++)
@@ -252,15 +346,12 @@ namespace SimpleCAD.Source
                 {
                     if (ImGui.Button("Point", new System.Numerics.Vector2(100, 20)))
                     {
-                        var point = new BasicSceneModel(
-                            new Point(ColorPalette.DeselectedColor), 
-                            "Point " + (scene.basicModels.Count + 1), 
-                            PrimitiveType.Points, true);
+                        var point = new PointSceneModel("Point " + (scene.basicModels.Count + 1));
                         scene.AddModel(point);
                         _uiState.createMenuVisible = false;
-                        if (selection.ControlPointModelSelected &&
+                        if (selection.ComplexModelSelected &&
                             selection.TryGetSingleSelected(out SceneModel model) &&
-                            model is ControlPointSceneModel controlPointModel)
+                            model is ComplexSceneModel controlPointModel)
                         {
                             controlPointModel.AddPoint(point);
                         }
@@ -268,8 +359,8 @@ namespace SimpleCAD.Source
 
                     if (ImGui.Button("Torus", new System.Numerics.Vector2(100, 20)))
                     {
-                        scene.AddModel(new BasicSceneModel(
-                            new Torus(40, 2, 1, ColorPalette.DeselectedColor), 
+                        scene.AddModel(new SimpleSceneModel(
+                            new Torus(40, 40, 2, 1, ColorPalette.DeselectedColor), 
                             "Torus " + (scene.basicModels.Count + 1), 
                             PrimitiveType.Lines));
                         _uiState.createMenuVisible = false;
@@ -277,32 +368,32 @@ namespace SimpleCAD.Source
 
                     if (ImGui.Button("Quad", new System.Numerics.Vector2(100, 20)))
                     {
-                        scene.AddModel(new BasicSceneModel(
+                        scene.AddModel(new SimpleSceneModel(
                             new Quad(ColorPalette.DeselectedColor), 
                             "Quad " + (scene.basicModels.Count + 1), 
                             PrimitiveType.Triangles));
                         _uiState.createMenuVisible = false;
                     }
 
-                    if (selection.SelectedControlPoints.Count > 0 && ImGui.Button("Bezier (C0)", new System.Numerics.Vector2(100, 20)))
+                    if (selection.SelectedPoints.Count > 0 && ImGui.Button("Bezier (C0)", new System.Numerics.Vector2(100, 20)))
                     {
-                        scene.AddModel(new BezierCurveSceneModel(
+                        scene.AddModel(new CurveSceneModel(
                             new C0BezierCurve(), 
                             "C0 Bezier " + (scene.complexModels.Count + 1)));
                         _uiState.createMenuVisible = false;
                     }
 
-                    if (selection.SelectedControlPoints.Count > 3 && ImGui.Button("Spline (C2)", new System.Numerics.Vector2(100, 20)))
+                    if (selection.SelectedPoints.Count > 3 && ImGui.Button("Spline (C2)", new System.Numerics.Vector2(100, 20)))
                     {
-                        scene.AddModel(new BezierCurveSceneModel(
+                        scene.AddModel(new CurveSceneModel(
                             new C2SplineCurve(), 
                             "C2 Spline " + (scene.complexModels.Count + 1)));
                         _uiState.createMenuVisible = false;
                     }
 
-                    if (selection.SelectedControlPoints.Count > 0 && ImGui.Button("Interpol. (C2)", new System.Numerics.Vector2(100, 20)))
+                    if (selection.SelectedPoints.Count > 0 && ImGui.Button("Interpol. (C2)", new System.Numerics.Vector2(100, 20)))
                     {
-                        scene.AddModel(new BezierCurveSceneModel(
+                        scene.AddModel(new CurveSceneModel(
                             new C2InterpolatingCurve(), 
                             "Interpolation" + (scene.complexModels.Count + 1)));
                         _uiState.createMenuVisible = false;
@@ -446,7 +537,7 @@ namespace SimpleCAD.Source
                 if (selection.TryGetSingleSelected(out var model))
                 { 
                     model.DrawElementGUI();
-                } else if (selection.Count > 1)
+                } else if (selection.SimpleCount > 1 || selection.ComplexCount > 1)
                 {
                     SelectionManager.Instance.DrawElementGUI();
                 }
@@ -466,7 +557,11 @@ namespace SimpleCAD.Source
         protected override void OnKeyDown(KeyboardKeyEventArgs e)
         {
             base.OnKeyDown(e);
-            _controller.PressChar((char)e.Key);
+            var c = (char)e.Key;
+            if (char.IsAscii(c))
+            {
+                _controller.PressChar(IsKeyDown(Keys.LeftShift) ? c : char.ToLower(c));
+            }
         }
 
         protected override void OnMouseDown(MouseButtonEventArgs e)
@@ -508,12 +603,12 @@ namespace SimpleCAD.Source
                     var ray = raycaster.Raycast(MousePosition, Size);
                     var cameraPos = scene.camera.Position;
                     scene.cursorPos = ray * scene.cursorRaycastDist + cameraPos;
-                    var point = new BasicSceneModel(new Point(ColorPalette.DeselectedColor), "Point " + (scene.basicModels.Count + 1), PrimitiveType.Points, true);
+                    var point = new PointSceneModel("Point " + (scene.basicModels.Count + 1), true);
                     scene.AddModel(point);
                     _uiState.createMenuVisible = false;
-                    if (selection.ControlPointModelSelected &&
+                    if (selection.ComplexModelSelected &&
                         selection.TryGetSingleSelected(out SceneModel model) &&
-                        model is ControlPointSceneModel controlPointModel)
+                        model is ComplexSceneModel controlPointModel)
                     {
                         controlPointModel.AddPoint(point);
                     }
@@ -563,6 +658,12 @@ namespace SimpleCAD.Source
             {
                 var selection = SelectionManager.Instance;
                 selection.Clear();
+
+                foreach (var model in scene.pointModels)
+                {
+                    selection.Add(model);
+                }
+
                 foreach (var model in scene.basicModels)
                 {
                     selection.Add(model);
@@ -673,7 +774,6 @@ namespace SimpleCAD.Source
 
         protected override void OnUpdateFrame(FrameEventArgs e)
         {
-           
             var scene = Scene.Instance;
 
             HandleKeyboardInput();

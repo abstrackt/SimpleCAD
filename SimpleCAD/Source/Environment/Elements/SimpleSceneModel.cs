@@ -2,54 +2,47 @@
 using OpenTK;
 using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
+using SharpSceneSerializer.DTOs.Interfaces;
 using SimpleCAD.Source.Geometry;
 using SimpleCAD.Source.GUI;
 using SimpleCAD.Source.Utils;
 using System;
+using Geom = SharpSceneSerializer.DTOs.GeometryObjects;
+using Enums = SharpSceneSerializer.DTOs.Enums;
+using Types = SharpSceneSerializer.DTOs.Types;
 
 namespace SimpleCAD.Source.Environment
 {
     // Represents a single rendered object in the scene with defined geometry.
-    public class BasicSceneModel : SceneModel, ISceneGUIElement
+    public class SimpleSceneModel : SceneModel, ISceneGUIElement
     {
-        public Vector3 Position => _pos;
+        public override Vector3 Position => _pos;
         public Vector3 Rotation => _rot;
-        public Matrix4 Transform => _transform;
+        public Vector3 Scale => _scale;
+        public override Matrix4 Transform => _transform;
 
         private Vector3 _pos;
         private Vector3 _rot;
         private Vector3 _scale;
         private Matrix4 _transform;
-        private bool _isControlPoint;
-        private bool _deletable;
 
-        // Is a control point for complex geometry
-        public bool IsControlPoint => _isControlPoint;
-
-        // Can be deleted via scene methods
-        public bool Deletable => _deletable;
-
-        protected override IGeometry Geometry { get; set; }
-
-        public BasicSceneModel(IGeometry geometry, string name, PrimitiveType primitives, bool isControlPoint = false, bool deletable = true) : base(geometry, name, primitives)
+        public SimpleSceneModel(IGeometry geometry, string name, PrimitiveType primitives) : base(geometry, name, primitives)
         {
             _transform = Matrix4.Identity;
             _scale = Vector3.One;
-            _isControlPoint = isControlPoint;
-            _deletable = deletable;
         }
 
         private void RefreshMatrices()
         {
             _transform =
-                Matrix4.CreateScale(_scale) * 
-                Matrix4.CreateRotationZ(_rot.Z) * 
-                Matrix4.CreateRotationY(_rot.Y) * 
+                Matrix4.CreateScale(_scale) *
+                Matrix4.CreateRotationZ(_rot.Z) *
+                Matrix4.CreateRotationY(_rot.Y) *
                 Matrix4.CreateRotationX(_rot.X) *
                 Matrix4.CreateTranslation(_pos);
         }
 
-        public void Translate(Vector3 translation, bool additive = false)
+        public override void Translate(Vector3 translation, bool additive = false)
         {
             _pos = additive ? _pos + translation : translation;
 
@@ -110,6 +103,29 @@ namespace SimpleCAD.Source.Environment
             {
                 Rescale(new Vector3(tmp.X, tmp.Y, tmp.Z));
             }
+        }
+
+        public bool TrySerialize(out IGeometryObject serialized)
+        {
+            if (Geometry is Torus torus)
+            {
+                var data = new Geom.Torus()
+                {
+                    Id = id,
+                    Name = Name,
+                    SmallRadius = torus.r,
+                    LargeRadius = torus.R,
+                    Position = _pos.AsFloat3(),
+                    Rotation = _rot.AsFloat3(),
+                    Scale = _scale.AsFloat3(),
+                    Samples = new Types.Uint2((uint)torus.resU, (uint)torus.resV)
+                };
+                serialized = data;
+                return true;
+            }
+
+            serialized = null;
+            return false;
         }
     }
 }

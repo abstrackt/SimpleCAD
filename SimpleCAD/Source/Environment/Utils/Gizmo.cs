@@ -10,8 +10,6 @@ namespace SimpleCAD.Source.Environment
     {
         private Matrix4 _model;
 
-        protected override IGeometry Geometry { get; set; }
-
         public Gizmo(IGeometry geom, PrimitiveType primitives) : base(geom) 
         {
             type = primitives;

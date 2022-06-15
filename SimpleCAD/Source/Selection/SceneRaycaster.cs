@@ -84,13 +84,24 @@ namespace SimpleCAD.Source.Selection
             return false;
         }
 
-        public bool RaycastBasicSearch(Vector2 mouse, Vector2 viewportSize, out BasicSceneModel found)
+        public bool RaycastBasicSearch(Vector2 mouse, Vector2 viewportSize, out SceneModel found)
         {
             var scene = Scene.Instance;
 
             var ray = Raycast(mouse, viewportSize);
 
             var cameraPos = scene.camera.Position;
+
+            foreach (var model in scene.pointModels)
+            {
+                var dist = (model.Position - cameraPos).Length;
+
+                if (Intersect(cameraPos, ray, model.Position, dist))
+                {
+                    found = model;
+                    return true;
+                }
+            }
 
             foreach (var model in scene.basicModels)
             {

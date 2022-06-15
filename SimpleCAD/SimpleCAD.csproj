@@ -10,11 +10,16 @@
   <ItemGroup>
     <PackageReference Include="ImGui.NET" Version="1.87.3" />
     <PackageReference Include="OpenTK" Version="4.7.2" />
+    <PackageReference Include="SharpSceneSerializer" Version="1.2.1" />
     <PackageReference Include="System.Drawing.Common" Version="6.0.0" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Service Include="{508349b6-6b84-4df5-91f0-309beebad82d}" />
+  </ItemGroup>
+
   <Target Name="PostBuild" AfterTargets="PostBuildEvent">
-    <Exec Command="xcopy /y $(ProjectDir)Source\Shaders\shader.vert  $(ProjectDir)$(OutDir)&#xD;&#xA;xcopy /y $(ProjectDir)Source\Shaders\shader.frag  $(ProjectDir)$(OutDir)&#xD;&#xA;xcopy /y $(ProjectDir)Source\Shaders\gridShader.vert  $(ProjectDir)$(OutDir)&#xD;&#xA;xcopy /y $(ProjectDir)Source\Shaders\bezierCurve.vert  $(ProjectDir)$(OutDir)&#xD;&#xA;xcopy /y $(ProjectDir)Source\Shaders\bezierCurve.frag  $(ProjectDir)$(OutDir)&#xD;&#xA;xcopy /y $(ProjectDir)Source\Shaders\bezierCurve.tesc  $(ProjectDir)$(OutDir)&#xD;&#xA;xcopy /y $(ProjectDir)Source\Shaders\bezierCurve.tese  $(ProjectDir)$(OutDir)&#xD;&#xA;xcopy /y $(ProjectDir)Source\Shaders\bezierSurface.vert  $(ProjectDir)$(OutDir)&#xD;&#xA;xcopy /y $(ProjectDir)Source\Shaders\bezierSurface.frag  $(ProjectDir)$(OutDir)&#xD;&#xA;xcopy /y $(ProjectDir)Source\Shaders\bezierSurface.tesc  $(ProjectDir)$(OutDir)&#xD;&#xA;xcopy /y $(ProjectDir)Source\Shaders\bezierSurface.tese  $(ProjectDir)$(OutDir)&#xD;&#xA;xcopy /y $(ProjectDir)Source\Shaders\splineSurface.vert  $(ProjectDir)$(OutDir)&#xD;&#xA;xcopy /y $(ProjectDir)Source\Shaders\splineSurface.frag  $(ProjectDir)$(OutDir)&#xD;&#xA;xcopy /y $(ProjectDir)Source\Shaders\splineSurface.tesc  $(ProjectDir)$(OutDir)&#xD;&#xA;xcopy /y $(ProjectDir)Source\Shaders\splineSurface.tese  $(ProjectDir)$(OutDir)" />
+    <Exec Command="xcopy /y $(ProjectDir)Source\Shaders\shader.vert  $(ProjectDir)$(OutDir)&#xD;&#xA;xcopy /y $(ProjectDir)Source\Shaders\shader.frag  $(ProjectDir)$(OutDir)&#xD;&#xA;xcopy /y $(ProjectDir)Source\Shaders\gridShader.vert  $(ProjectDir)$(OutDir)&#xD;&#xA;xcopy /y $(ProjectDir)Source\Shaders\bezierCurve.vert  $(ProjectDir)$(OutDir)&#xD;&#xA;xcopy /y $(ProjectDir)Source\Shaders\bezierCurve.frag  $(ProjectDir)$(OutDir)&#xD;&#xA;xcopy /y $(ProjectDir)Source\Shaders\bezierCurve.tesc  $(ProjectDir)$(OutDir)&#xD;&#xA;xcopy /y $(ProjectDir)Source\Shaders\bezierCurve.tese  $(ProjectDir)$(OutDir)&#xD;&#xA;xcopy /y $(ProjectDir)Source\Shaders\bezierSurface.vert  $(ProjectDir)$(OutDir)&#xD;&#xA;xcopy /y $(ProjectDir)Source\Shaders\bezierSurface.frag  $(ProjectDir)$(OutDir)&#xD;&#xA;xcopy /y $(ProjectDir)Source\Shaders\bezierSurface.tesc  $(ProjectDir)$(OutDir)&#xD;&#xA;xcopy /y $(ProjectDir)Source\Shaders\bezierSurface.tese  $(ProjectDir)$(OutDir)&#xD;&#xA;xcopy /y $(ProjectDir)Source\Shaders\splineSurface.vert  $(ProjectDir)$(OutDir)&#xD;&#xA;xcopy /y $(ProjectDir)Source\Shaders\splineSurface.frag  $(ProjectDir)$(OutDir)&#xD;&#xA;xcopy /y $(ProjectDir)Source\Shaders\splineSurface.tesc  $(ProjectDir)$(OutDir)&#xD;&#xA;xcopy /y $(ProjectDir)Source\Shaders\splineSurface.tese  $(ProjectDir)$(OutDir)&#xD;&#xA;xcopy /y $(ProjectDir)Source\Serialization\schema.json  $(ProjectDir)$(OutDir)" />
   </Target>
 
 </Project>

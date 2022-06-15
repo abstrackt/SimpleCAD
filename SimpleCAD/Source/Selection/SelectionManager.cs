@@ -5,6 +5,7 @@ using ImGuiNET;
 using OpenTK;
 using OpenTK.Mathematics;
 using SimpleCAD.Source.Environment;
+using SimpleCAD.Source.Geometry;
 using SimpleCAD.Source.GUI;
 
 namespace SimpleCAD.Source.Utils
@@ -12,8 +13,9 @@ namespace SimpleCAD.Source.Utils
     public sealed class SelectionManager : ISceneGUIElement
     {
         private SelectionManager() {
-            _selectedModels = new HashSet<BasicSceneModel>();
-            _selectionCache = new Dictionary<BasicSceneModel, Matrix4>();
+            _selectedSimpleModels = new HashSet<SceneModel>();
+            _selectedComplexModels = new HashSet<ComplexSceneModel>();
+            _selectionCache = new Dictionary<SceneModel, Matrix4>();
         }
 
         private static SelectionManager instance = null;
@@ -30,10 +32,20 @@ namespace SimpleCAD.Source.Utils
         }
 
         public Vector3 Midpoint => _originalPivot + _currentPos;
-        public bool Selected => _selectedModels.Count > 0;
-        public List<BasicSceneModel> SelectedControlPoints => _selectedModels.Where(x => x.IsControlPoint).ToList();
-        public bool ControlPointModelSelected => _selectedControlPointModel != null;
-        public int Count => _selectedModels.Count;
+        public bool Selected => _selectedSimpleModels.Count > 0;
+        public List<PointSceneModel> SelectedPoints => _selectedSimpleModels
+            .Where(x => x is PointSceneModel).Cast<PointSceneModel>()
+            .ToList();
+        public List<SurfaceSceneModel> SelectedBezierSurfaces => _selectedComplexModels
+            .Where(x => (x is SurfaceSceneModel surf) && 
+            (surf.Surface is C0BezierSurface) && 
+            surf.Surface.PatchesU == 1 && 
+            surf.Surface.PatchesV == 1)
+            .Cast<SurfaceSceneModel>()
+            .ToList();
+        public bool ComplexModelSelected => _selectedComplexModels.Count == 1;
+        public int SimpleCount => _selectedSimpleModels.Count;
+        public int ComplexCount => _selectedComplexModels.Count;
         
 
         private Vector3 _originalPivot;
@@ -42,63 +54,71 @@ namespace SimpleCAD.Source.Utils
         private Vector3 _currentRot;
         private Vector3 _currentScale;
 
-        private HashSet<BasicSceneModel> _selectedModels;
-        private Dictionary<BasicSceneModel, Matrix4> _selectionCache;
-        private ControlPointSceneModel _selectedControlPointModel;
+        private HashSet<SceneModel> _selectedSimpleModels;
+        private Dictionary<SceneModel, Matrix4> _selectionCache;
+        private HashSet<ComplexSceneModel> _selectedComplexModels;
 
-        public void Add(BasicSceneModel model)
+        public void Add(SceneModel model)
         {
-            _selectedModels.Add(model);
+            _selectedSimpleModels.Add(model);
             ResetState();
         }
 
-        public void Add(ControlPointSceneModel model)
+        public void Add(ComplexSceneModel model)
         {
-            _selectedControlPointModel = model;
-        }
-
-        public void Remove(BasicSceneModel model)
-        {
-            if (_selectedModels.Contains(model))
-                _selectedModels.Remove(model);
+            _selectedComplexModels.Add(model);
             ResetState();
         }
 
-        public void Remove(ControlPointSceneModel model)
+        public void Remove(SceneModel model)
         {
-            _selectedControlPointModel = null;
+            if (_selectedSimpleModels.Contains(model))
+                _selectedSimpleModels.Remove(model);
+            ResetState();
+        }
+
+        public void Remove(ComplexSceneModel model)
+        {
+            if (_selectedComplexModels.Contains(model))
+                _selectedComplexModels.Remove(model);
         }
 
         public void Clear()
         {
-            _selectedModels.Clear();
+            _selectedSimpleModels.Clear();
             _selectionCache.Clear();
         }
 
         public bool TryGetSingleSelected(out SceneModel model)
         {
-            if (_selectedControlPointModel != null)
+            model = null;
+            if (ComplexCount == 1)
             {
-                model = _selectedControlPointModel;
+                model = _selectedComplexModels.Single();
                 return true;
+            } 
+            else if (ComplexCount > 1)
+            {
+                return false;
             }
 
-            model = null;
-            if (Count != 1)
-                return false;
+            if (SimpleCount != 1)
+            {
+                return false;   
+            }
 
-            model = _selectedModels.Single();
+            model = _selectedSimpleModels.Single();
             return true;
         }
 
         public bool IsSelected(SceneModel model)
         {
-            return _selectedModels.Contains(model) || model == _selectedControlPointModel;
+            return _selectedSimpleModels.Contains(model) || _selectedComplexModels.Contains(model);
         }
 
         public int SelectedCount()
         {
-            return _selectedModels.Count;
+            return _selectedSimpleModels.Count;
         }
 
         public void ResetState()
@@ -108,7 +128,7 @@ namespace SimpleCAD.Source.Utils
             _currentRot = Vector3.Zero;
             _currentScale = Vector3.One;
 
-            foreach (var model in _selectedModels)
+            foreach (var model in _selectedSimpleModels)
             {
                 _selectionCache.Add(model, model.Transform);
             }
@@ -120,14 +140,14 @@ namespace SimpleCAD.Source.Utils
         {
             var pivot = Vector3.Zero;
 
-            foreach (var model in _selectedModels)
+            foreach (var model in _selectedSimpleModels)
             {
                 pivot += model.Position;
             }
 
-            if (Count > 1)
+            if (SimpleCount > 1)
             {
-                pivot /= Count;
+                pivot /= SimpleCount;
             }
 
             return pivot;
@@ -155,79 +175,43 @@ namespace SimpleCAD.Source.Utils
             MoveSelection();
         }
 
-        private (Vector3 translation, Vector3 xyzRot, Vector3 scale) DecomposeMatrix(Matrix4 trs)
-        {
-            var t = trs.Row3.Xyz;
-
-            var s = new Vector3(trs.Row0.Xyz.Length, trs.Row1.Xyz.Length, trs.Row2.Xyz.Length);
-
-            var R = new Matrix3(trs.Row0.Xyz.Normalized(), trs.Row1.Xyz.Normalized(), trs.Row2.Xyz.Normalized());
-
-            var euler = Vector3.Zero;
-
-            R.Transpose();
-
-            if(R.M13 < +1)
-            {
-                if(R.M13 > -1)
-                {
-                    euler.Y = (float)Math.Asin(R.M13);
-                    euler.X = (float)Math.Atan2(-R.M23, R.M33);
-                    euler.Z = (float)Math.Atan2(-R.M12, R.M11);
-                }
-                else
-                {
-                    euler.Y = (float)(-Math.PI / 2);
-                    euler.X = (float)Math.Atan2(R.M21, R.M22);
-                    euler.Z = 0;
-                }
-            }
-            else
-            {
-                euler.Y = (float)(Math.PI / 2);
-                euler.X = (float)Math.Atan2(R.M21, R.M22);
-                euler.Z = 0;
-            }
-
-            return (t, euler, s);
-        }
-
         private void MoveSelection()
         {
-            foreach (var model in _selectedModels)
+            foreach (var model in _selectedSimpleModels)
             {
-                if (model is BasicSceneModel basicModel)
+                var transform = _selectionCache[model];
+
+                var translatePivot = Matrix4.CreateTranslation(-_originalPivot);
+
+                transform *= translatePivot;
+
+                var groupRotation =
+                    Matrix4.CreateRotationZ(_currentRot.Z) *
+                    Matrix4.CreateRotationY(_currentRot.Y) *
+                    Matrix4.CreateRotationX(_currentRot.X);
+
+                transform *= groupRotation;
+
+                var groupTranslation =
+                    Matrix4.CreateTranslation(_currentPos);
+
+                transform *= groupTranslation;
+
+                var groupScale =
+                    Matrix4.CreateScale(_currentScale);
+
+                transform *= groupScale;
+
+                var translateBack = Matrix4.CreateTranslation(_originalPivot);
+
+                transform *= translateBack;
+
+                (var translation, var rotation, var scale) = MathUtils.DecomposeMatrix(transform);
+
+                model.Translate(translation);
+
+                if (model is SimpleSceneModel basicModel)
                 {
-                    var transform = _selectionCache[basicModel];
-
-                    var translatePivot = Matrix4.CreateTranslation(-_originalPivot);
-
-                    transform *= translatePivot;
-
-                    var groupRotation =
-                        Matrix4.CreateRotationZ(_currentRot.Z) *
-                        Matrix4.CreateRotationY(_currentRot.Y) *
-                        Matrix4.CreateRotationX(_currentRot.X);
-
-                    transform *= groupRotation;
-
-                    var groupTranslation =
-                        Matrix4.CreateTranslation(_currentPos);
-
-                    transform *= groupTranslation;
-
-                    var groupScale =
-                        Matrix4.CreateScale(_currentScale);
-
-                    transform *= groupScale;
-
-                    var translateBack = Matrix4.CreateTranslation(_originalPivot);
-
-                    transform *= translateBack;
-
-                    (var translation, var rotation, var scale) = DecomposeMatrix(transform);
-
-                    basicModel.Translate(translation);
                     basicModel.Rotate(rotation * 180f / (float)Math.PI);
                     basicModel.Rescale(scale);
                 }
@@ -236,34 +220,70 @@ namespace SimpleCAD.Source.Utils
 
         public void DrawElementGUI()
         {
-            var pos = _currentPos;
-            var tmp = new System.Numerics.Vector3(pos.X, pos.Y, pos.Z);
-            if (ImGui.DragFloat3("Position", ref tmp, 0.05f))
+            var bezierSurfaces = SelectedBezierSurfaces;
+
+            if (bezierSurfaces.Count == 3)
             {
-                TranslateSelection(new Vector3(tmp.X, tmp.Y, tmp.Z));
+                if (ImGui.Button("Create Gregory Patch"))
+                {
+                    Scene.Instance.TryCreateGregoryPatch(
+                        bezierSurfaces[0], 
+                        bezierSurfaces[1], 
+                        bezierSurfaces[2]);
+                }
             }
 
-            var rot = MathUtils.Rad2Deg(_currentRot);
-            tmp = new System.Numerics.Vector3(rot.X, rot.Y, rot.Z);
-            if (ImGui.DragFloat3("Rotation", ref tmp, 2f))
+            if (_selectedComplexModels.Count == 0)
             {
-                RotateSelection(new Vector3(tmp.X, tmp.Y, tmp.Z));
+                if (SelectedPoints.Count == 2)
+                {
+                    if (ImGui.Button("Merge Points"))
+                    {
+                        Scene.Instance.MergePoints(SelectedPoints[0], SelectedPoints[1]);
+                    }
+                    ImGui.Separator();
+                }
+
+                var pos = _currentPos;
+                var tmp = new System.Numerics.Vector3(pos.X, pos.Y, pos.Z);
+                if (ImGui.DragFloat3("Position", ref tmp, 0.05f))
+                {
+                    TranslateSelection(new Vector3(tmp.X, tmp.Y, tmp.Z));
+                }
+
+                var rot = MathUtils.Rad2Deg(_currentRot);
+                tmp = new System.Numerics.Vector3(rot.X, rot.Y, rot.Z);
+                if (ImGui.DragFloat3("Rotation", ref tmp, 2f))
+                {
+                    RotateSelection(new Vector3(tmp.X, tmp.Y, tmp.Z));
+                }
+
+                var scale = _currentScale;
+                tmp = new System.Numerics.Vector3(scale.X, scale.Y, scale.Z);
+                if (ImGui.DragFloat3("Scale", ref tmp, 0.1f))
+                {
+                    RescaleSelection(new Vector3(tmp.X, tmp.Y, tmp.Z));
+                }
+
+                ImGui.Separator();
+
+                ImGui.Text("Now editing");
+
+                foreach (var model in _selectedSimpleModels)
+                {
+                    ImGui.BulletText(model.Name);
+                }
             }
-
-            var scale = _currentScale;
-            tmp = new System.Numerics.Vector3(scale.X, scale.Y, scale.Z);
-            if (ImGui.DragFloat3("Scale", ref tmp, 0.1f))
+            else
             {
-                RescaleSelection(new Vector3(tmp.X, tmp.Y, tmp.Z));
-            }
+                ImGui.Separator();
 
-            ImGui.Separator();
+                ImGui.Text("Now editing");
 
-            ImGui.Text("Now editing");
-
-            foreach (var model in _selectedModels)
-            {
-                ImGui.BulletText(model.Name);
+                foreach (var model in _selectedComplexModels)
+                {
+                    ImGui.BulletText(model.Name);
+                }
             }
         }
     }

@@ -3,8 +3,10 @@ using System.Collections.Generic;
 using ImGuiNET;
 using OpenTK;
 using OpenTK.Graphics;
+using SharpSceneSerializer.DTOs.Enums;
 using SimpleCAD.Source.GUI;
 using SimpleCAD.Source.Utils;
+using DTO = SharpSceneSerializer.DTOs;
 
 namespace SimpleCAD.Source.Geometry
 {
