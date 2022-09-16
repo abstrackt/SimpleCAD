@@ -75,15 +75,18 @@ namespace SimpleCAD.Source.Environment
             }
         }
 
-        public void ReplacePoint(PointSceneModel oldPoint, PointSceneModel newPoint)
+        public virtual void ReplacePoint(PointSceneModel oldPoint, PointSceneModel newPoint)
         {
+            bool changed = false;
+
             for (int i = 0; i < _controlPoints.Count; i++)
             {
                 if (_controlPoints[i] == oldPoint)
                 {
                     _controlPoints[i] = newPoint;
+                    changed = true;
                 }  
-            }
+            }      
         }
 
         public override void Refresh()

@@ -6,6 +6,7 @@ using SimpleCAD.Source.Geometry;
 using SimpleCAD.Source.Utils;
 using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
+using SimpleCAD.Source.Geometry.Impl;
 
 namespace SimpleCAD.Source.Environment
 {
@@ -68,6 +69,11 @@ namespace SimpleCAD.Source.Environment
             return _id++;
         }
 
+        public void ForceSetId(uint value)
+        {
+            _id = value;
+        }
+
         public bool TryFind(uint id, out SceneModel model)
         {
             return _modelDict.TryGetValue(id, out model);
@@ -124,68 +130,82 @@ namespace SimpleCAD.Source.Environment
             p2.Translate(pos, false);
         }
 
-        public void TryCreateGregoryPatch(SurfaceSceneModel s1, SurfaceSceneModel s2, SurfaceSceneModel s3)
+        public void TryGetGregoryPatchBorders(
+            SurfaceSceneModel s1, 
+            SurfaceSceneModel s2, 
+            SurfaceSceneModel s3)
         {
             // Find valid holes
             if (s1.TryGetCorners(out var c1) && s2.TryGetCorners(out var c2) && s3.TryGetCorners(out var c3))
             {
                 // Common corners between s1 and s2
-                var c1c2 = c1.Where(x => c2.Contains(x)).ToList();
+                var c1c2s = c1.Where(x => c2.Contains(x)).ToList();
 
                 // Common corners between s2 and s3
-                var c2c3 = c2.Where(x => c3.Contains(x)).ToList();
+                var c2c3s = c2.Where(x => c3.Contains(x)).ToList();
 
                 // Common corners between s2 and s3
-                var c3c1 = c3.Where(x => c1.Contains(x)).ToList();
+                var c3c1s = c3.Where(x => c1.Contains(x)).ToList();
 
                 // Check if they only contain one common corner each
-                if (c1c2.Count == 1 && c2c3.Count == 1 && c3c1.Count == 1)
+                for (int i1 = 0; i1 < c1c2s.Count; i1++)
                 {
-                    // Check if the points always lie on the same edge within a bezier patch
-                    var i11 = c1.IndexOf(c3c1[0]);
-                    var i12 = c1.IndexOf(c1c2[0]);
-                    var i21 = c2.IndexOf(c1c2[0]);
-                    var i22 = c2.IndexOf(c2c3[0]);
-                    var i31 = c3.IndexOf(c2c3[0]);
-                    var i32 = c3.IndexOf(c3c1[0]);
-                    
-                    if ((((i11 + 1) % c1.Count) == i12 || ((i12 + 1) % c1.Count) == i11) &&
-                        (((i21 + 1) % c2.Count) == i22 || ((i22 + 1) % c2.Count) == i21) &&
-                        (((i31 + 1) % c3.Count) == i32 || ((i32 + 1) % c3.Count) == i31))
+                    for (int i2 = 0; i2 < c2c3s.Count; i2++)
                     {
-                        // Get points on borders of hole
-                        var s1c = s1.ControlPoints;
-                        var s2c = s2.ControlPoints;
-                        var s3c = s3.ControlPoints;
-
-                        var i1s1 = s1c.IndexOf(c3c1[0]);
-                        var i2s1 = s1c.IndexOf(c1c2[0]);
-                        var i1s2 = s2c.IndexOf(c1c2[0]);
-                        var i2s2 = s2c.IndexOf(c2c3[0]);
-                        var i1s3 = s3c.IndexOf(c2c3[0]);
-                        var i2s3 = s3c.IndexOf(c3c1[0]);
-                        if (s1.TryGetLineBetween(i1s1, i2s1, out var b1) &&
-                            s2.TryGetLineBetween(i1s2, i2s2, out var b2) &&
-                            s3.TryGetLineBetween(i1s3, i2s3, out var b3))
+                        for (int i3 = 0; i3 < c3c1s.Count; i3++)
                         {
-                            foreach (var b in b1)
-                            {
-                                SelectionManager.Instance.Add(b);
-                            }
+                            // Check if the points always lie on the same edge within a bezier patch
 
-                            foreach (var b in b2)
-                            {
-                                SelectionManager.Instance.Add(b);
-                            }
+                            var c1c2 = c1c2s[i1];
+                            var c2c3 = c2c3s[i2];
+                            var c3c1 = c3c1s[i3];
 
-                            foreach (var b in b3)
+                            var i11 = c1.IndexOf(c3c1);
+                            var i12 = c1.IndexOf(c1c2);
+                            var i21 = c2.IndexOf(c1c2);
+                            var i22 = c2.IndexOf(c2c3);
+                            var i31 = c3.IndexOf(c2c3);
+                            var i32 = c3.IndexOf(c3c1);
+
+                            if ((((i11 + 1) % c1.Count) == i12 || ((i12 + 1) % c1.Count) == i11) &&
+                                (((i21 + 1) % c2.Count) == i22 || ((i22 + 1) % c2.Count) == i21) &&
+                                (((i31 + 1) % c3.Count) == i32 || ((i32 + 1) % c3.Count) == i31))
                             {
-                                SelectionManager.Instance.Add(b);
+                                // Get points on borders of hole
+                                var s1c = s1.ControlPoints;
+                                var s2c = s2.ControlPoints;
+                                var s3c = s3.ControlPoints;
+
+                                var i1s1 = s1c.IndexOf(c3c1);
+                                var i2s1 = s1c.IndexOf(c1c2);
+                                var i1s2 = s2c.IndexOf(c1c2);
+                                var i2s2 = s2c.IndexOf(c2c3);
+                                var i1s3 = s3c.IndexOf(c2c3);
+                                var i2s3 = s3c.IndexOf(c3c1);
+                                if (s1.TryGetValuesBetween(i1s1, i2s1, out var p1) &&
+                                    s2.TryGetValuesBetween(i1s2, i2s2, out var p2) &&
+                                    s3.TryGetValuesBetween(i1s3, i2s3, out var p3) &&
+                                    s1.TryGetDerivativesBetween(i1s1, i2s1, out var d1) &&
+                                    s2.TryGetDerivativesBetween(i1s2, i2s2, out var d2) &&
+                                    s3.TryGetDerivativesBetween(i1s3, i2s3, out var d3))
+                                {
+                                    var model = new GregoryPatchSceneModel(new GregoryPatch(), "Gregory patch");
+                                    model.GenerateGregoryPatch(
+                                        new List<List<PointSceneModel>> { p1, p2, p3 },
+                                        new List<List<PointSceneModel>> { d1, d2, d3 });
+                                    AddModel(model);
+                                }
                             }
                         }
                     }
                 }
             }
+        }
+
+        public void AddModel(GregoryPatchSceneModel model)
+        {
+            complexModels.Add(model);
+            _modelDict.Add(model.id, model);
         }
 
         public void AddModel(PointSceneModel model, bool translate = true)

@@ -69,10 +69,75 @@ namespace SimpleCAD.Source.Environment
 
             return false;
         }
-
-        public bool TryGetLineBetween(int i1, int i2, out List<PointSceneModel> border)
+        public override void ReplacePoint(PointSceneModel oldPoint, PointSceneModel newPoint)
         {
-            border = new List<PointSceneModel>();
+            base.ReplacePoint(oldPoint, newPoint);
+            GeneratePatchData();
+        }
+
+        public bool TryGetDerivativesBetween(int i1, int i2, out List<PointSceneModel> points)
+        {
+            points = new List<PointSceneModel>();
+
+            if (i2 < i1)
+            {
+                var tmp = i2;
+                i2 = i1;
+                i1 = tmp;
+            }
+
+            var i1u = i1 % Surface.PointsU;
+            var i2u = i2 % Surface.PointsU;
+
+            var i1v = i1 / Surface.PointsU;
+            var i2v = i2 / Surface.PointsU;
+
+            if (i1u == i2u && (i1u == 0 || i1u == Surface.PointsU - 1))
+            {
+                if (i1u == Surface.PointsU - 1)
+                {
+                    i1 -= 1;
+                    i2 -= 1;
+                }
+                else
+                {
+                    i1 += 1;
+                    i2 += 1;
+                }
+
+                for (int i = i1; i <= i2; i += Surface.PointsU)
+                {
+                    points.Add(ControlPoints[i]);
+                }
+                return true;
+            }
+
+            if (i1v == i2v && (i1v == 0 || i1v == Surface.PointsV - 1))
+            {
+                if (i1v == Surface.PointsV - 1)
+                {
+                    i1 -= Surface.PointsU;
+                    i2 -= Surface.PointsU;
+                }
+                else
+                {
+                    i1 += Surface.PointsU;
+                    i2 += Surface.PointsU;
+                }
+
+                for (int i = i1; i <= i2; i += 1)
+                {
+                    points.Add(ControlPoints[i]);
+                }
+                return true;
+            }
+
+            return false;
+        }
+
+        public bool TryGetValuesBetween(int i1, int i2, out List<PointSceneModel> points)
+        {
+            points = new List<PointSceneModel>();
 
             if (i2 < i1)
             {
@@ -91,7 +156,7 @@ namespace SimpleCAD.Source.Environment
             {
                 for (int i = i1; i <= i2; i += Surface.PointsU)
                 {
-                    border.Add(ControlPoints[i]);
+                    points.Add(ControlPoints[i]);
                 }
                 return true;
             }
@@ -100,7 +165,7 @@ namespace SimpleCAD.Source.Environment
             {
                 for (int i = i1; i <= i2; i += 1)
                 {
-                    border.Add(ControlPoints[i]);
+                    points.Add(ControlPoints[i]);
                 }
                 return true;
             }

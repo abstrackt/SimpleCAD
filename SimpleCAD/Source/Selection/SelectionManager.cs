@@ -226,7 +226,7 @@ namespace SimpleCAD.Source.Utils
             {
                 if (ImGui.Button("Create Gregory Patch"))
                 {
-                    Scene.Instance.TryCreateGregoryPatch(
+                    Scene.Instance.TryGetGregoryPatchBorders(
                         bezierSurfaces[0], 
                         bezierSurfaces[1], 
                         bezierSurfaces[2]);

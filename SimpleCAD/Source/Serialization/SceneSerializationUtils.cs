@@ -57,9 +57,17 @@ namespace SimpleCAD.Source.Serialization
 
             scene.ResetScene();
 
+            uint maxId = 0;
+
             foreach(var point in data.Points)
             {
                 DeserializePoint(point, out var model);
+
+                if (model.id > maxId)
+                {
+                    maxId = model.id;
+                }
+
                 scene.AddModel(model, false);
             }
 
@@ -67,6 +75,11 @@ namespace SimpleCAD.Source.Serialization
             {
                 if (TryDeserializeObject(geom, out var model))
                 {
+                    if (model.id > maxId)
+                    {
+                        maxId = model.id;
+                    }
+
                     if (model is SimpleSceneModel simple)
                         scene.AddModel(simple, false);
 
@@ -77,6 +90,8 @@ namespace SimpleCAD.Source.Serialization
                         scene.AddModel(surface);
                 }
             }
+
+            scene.ForceSetId(maxId + 1);
         }
 
         private static void DeserializePoint(Geom.Point data, out PointSceneModel model)
