@@ -85,6 +85,7 @@ namespace SimpleCAD.Source.Utils
 
         public void Clear()
         {
+            _selectedComplexModels.Clear();
             _selectedSimpleModels.Clear();
             _selectionCache.Clear();
         }

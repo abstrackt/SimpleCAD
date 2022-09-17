@@ -189,10 +189,29 @@ namespace SimpleCAD.Source.Environment
                                     s2.TryGetDerivativesBetween(i1s2, i2s2, out var d2) &&
                                     s3.TryGetDerivativesBetween(i1s3, i2s3, out var d3))
                                 {
+                                    // Check if points are returned in correct order
+
+                                    if (p1[p1.Count - 1] != p2[0])
+                                    {
+                                        p2.Reverse();
+                                        d2.Reverse();
+                                    }
+
+                                    if (p3[p3.Count - 1] != p1[0])
+                                    {
+                                        p3.Reverse();
+                                        d3.Reverse();
+                                    }
+
                                     var model = new GregoryPatchSceneModel(new GregoryPatch(), "Gregory patch");
-                                    model.GenerateGregoryPatch(
-                                        new List<List<PointSceneModel>> { p1, p2, p3 },
-                                        new List<List<PointSceneModel>> { d1, d2, d3 });
+                                    var points = new List<PointSceneModel>();
+                                    points.AddRange(p1);
+                                    points.AddRange(p2);
+                                    points.AddRange(p3);
+                                    points.AddRange(d1);
+                                    points.AddRange(d2);
+                                    points.AddRange(d3);
+                                    model.SetPoints(points, true);
                                     AddModel(model);
                                 }
                             }
