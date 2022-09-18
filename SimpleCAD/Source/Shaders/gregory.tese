@@ -1,5 +1,5 @@
 ﻿#version 400
-layout( quads, equal_spacing, ccw ) in;
+layout( quads, equal_spacing, cw ) in;
 
 uniform mat4 view;
 uniform mat4 projection;
