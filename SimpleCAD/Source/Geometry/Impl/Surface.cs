@@ -51,6 +51,30 @@ namespace SimpleCAD.Source.Geometry
 
         public abstract List<Vector3> GenerateControlPoints(float mU, float mV);
 
+        protected Vector3[,] GetPatchPoints(int uPatch, int vPatch)
+        {
+            if (Wrap)
+                uPatch = (uPatch + PatchesU) % PatchesU;
+
+            if (uPatch >= PatchesU || vPatch >= PatchesV || uPatch < 0 || vPatch < 0)
+                throw new InvalidOperationException("Trying to obtain patch outside of permitted range");
+
+            var points = new Vector3[PatchSize, PatchSize];
+
+            int startU = uPatch * PatchOffset;
+            int startV = vPatch * PatchOffset;
+
+            for (int u = 0; u < PatchSize; u++)
+            {
+                for (int v = 0; v < PatchSize; v++)
+                {
+                    points[u, v] = controlPoints[startU + u, startV + v];
+                }
+            }
+
+            return points;
+        }
+
         public void SetControlPoints(List<Vector3> positions)
         {
             if (positions.Count != controlPoints.Length)

@@ -12,18 +12,28 @@ using System.Threading.Tasks;
 
 namespace SimpleCAD.Source.Geometry
 {
-    public class C0BezierSurface : Surface, ISceneGUIElement
+    public class C0BezierSurface : Surface, ISceneGUIElement, IParametricSurface
     {
         private bool _drawPolygon;
 
+        #region Draw data
         public override int PatchSize => 4;
         public override int PatchOffset => 3;
         public override (int u, int v) TesselationLevel => (_tessU, _tessV);
 
+        
         public override string VertexShader => "bezierSurface.vert";
         public override string FragShader => "bezierSurface.frag";
         public override string TescShader => "bezierSurface.tesc";
         public override string TeseShader => "bezierSurface.tese";
+        #endregion
+
+        #region Parametric interface
+        public bool WrapU => Wrap;
+        public bool WrapV => false;
+        public int RangeU => patchesU;
+        public int RangeV => patchesV;
+        #endregion
 
         private int _tessU, _tessV;
 
@@ -130,11 +140,29 @@ namespace SimpleCAD.Source.Geometry
         public void DrawElementGUI()
         {
             ImGui.Checkbox("Draw bezier grid", ref _drawPolygon);
-
             ImGui.SetNextItemWidth(100f);
             ImGui.DragInt("Divisions (U)", ref _tessU, 0.1f, 1, 64);
             ImGui.SetNextItemWidth(100f);
             ImGui.DragInt("Divisions (V)", ref _tessV, 0.1f, 1, 64);
+        }
+
+        public Vector3 Sample(float u, float v)
+        {
+            if (WrapU)
+                u = u + RangeU.max 
+
+            int patchU = (int)u;
+            int patchV = (int)v;
+        }
+
+        public Vector3 DerivU(float u, float v)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Vector3 DerivV(float u, float v)
+        {
+            throw new NotImplementedException();
         }
     }
 }

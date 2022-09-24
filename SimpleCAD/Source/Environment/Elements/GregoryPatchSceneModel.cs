@@ -1,10 +1,6 @@
 ﻿using OpenTK.Graphics.OpenGL4;
-using OpenTK.Mathematics;
 using SharpSceneSerializer.DTOs.Interfaces;
-using SimpleCAD.Source.Geometry;
 using SimpleCAD.Source.Geometry.Impl;
-using SimpleCAD.Source.Utils;
-using System.Runtime.CompilerServices;
 
 namespace SimpleCAD.Source.Environment
 {
