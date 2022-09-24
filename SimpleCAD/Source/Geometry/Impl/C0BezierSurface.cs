@@ -2,6 +2,7 @@
 using OpenTK;
 using OpenTK.Mathematics;
 using SharpSceneSerializer.DTOs.Enums;
+using SimpleCAD.Source.Environment;
 using SimpleCAD.Source.GUI;
 using SimpleCAD.Source.Utils;
 using System;
@@ -144,15 +145,38 @@ namespace SimpleCAD.Source.Geometry
             ImGui.DragInt("Divisions (U)", ref _tessU, 0.1f, 1, 64);
             ImGui.SetNextItemWidth(100f);
             ImGui.DragInt("Divisions (V)", ref _tessV, 0.1f, 1, 64);
+
+            if (ImGui.Button("Sample u = 0.2, v = 0.3"))
+            {
+                var model = new PointSceneModel("Sampled point");
+                Scene.Instance.AddModel(model);
+                var pos = Sample(0.2f, 0.3f);
+                model.Translate(pos);
+            }
         }
 
         public Vector3 Sample(float u, float v)
         {
             if (WrapU)
-                u = u + RangeU.max 
+                u = (u + RangeU) % RangeU;
 
             int patchU = (int)u;
             int patchV = (int)v;
+
+            // Clamp u and v to 0-1 range;
+            u = u - (int)u;
+            v = v - (int)v;
+
+            var p = GetPatchPoints(patchU, patchV);
+
+            Vector3 u0 = MathUtils.DeCasteljau(3, u, new List<Vector3>() { p[0, 0], p[0, 1], p[0, 2], p[0, 3] });
+            Vector3 u1 = MathUtils.DeCasteljau(3, u, new List<Vector3>() { p[1, 0], p[1, 1], p[1, 2], p[1, 3] });
+            Vector3 u2 = MathUtils.DeCasteljau(3, u, new List<Vector3>() { p[2, 0], p[2, 1], p[2, 2], p[2, 3] });
+            Vector3 u3 = MathUtils.DeCasteljau(3, u, new List<Vector3>() { p[3, 0], p[3, 1], p[3, 2], p[3, 3] });
+
+            Vector3 v0 = MathUtils.DeCasteljau(3, v, new List<Vector3>() { u0, u1, u2, u3 });
+
+            return v0;
         }
 
         public Vector3 DerivU(float u, float v)
