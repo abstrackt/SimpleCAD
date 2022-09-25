@@ -43,6 +43,11 @@ namespace SimpleCAD.Source.Utils
             surf.Surface.PatchesV == 1)
             .Cast<SurfaceSceneModel>()
             .ToList();
+
+        public List<ComplexSceneModel> SelectedParametricSurfaces => _selectedComplexModels
+            .Where(x => x.HasParametricGeometry)
+            .ToList();
+
         public bool ComplexModelSelected => _selectedComplexModels.Count == 1;
         public int SimpleCount => _selectedSimpleModels.Count;
         public int ComplexCount => _selectedComplexModels.Count;
@@ -227,10 +232,22 @@ namespace SimpleCAD.Source.Utils
             {
                 if (ImGui.Button("Create Gregory Patch"))
                 {
-                    Scene.Instance.TryGetGregoryPatchBorders(
+                    Scene.Instance.SetupGregoryPatch(
                         bezierSurfaces[0], 
                         bezierSurfaces[1], 
                         bezierSurfaces[2]);
+                }
+            }
+
+            var parametricSurfaces = SelectedParametricSurfaces;
+
+            if (parametricSurfaces.Count == 2)
+            {
+                if (ImGui.Button("Find intersection"))
+                {
+                    Scene.Instance.SetupIntersection(
+                        parametricSurfaces[0].ParametricGeometry,
+                        parametricSurfaces[1].ParametricGeometry);
                 }
             }
 

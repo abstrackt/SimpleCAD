@@ -7,6 +7,7 @@ using SimpleCAD.Source.Utils;
 using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
 using SimpleCAD.Source.Geometry.Impl;
+using SimpleCAD.Source.Intersections;
 
 namespace SimpleCAD.Source.Environment
 {
@@ -130,7 +131,7 @@ namespace SimpleCAD.Source.Environment
             p2.Translate(pos, false);
         }
 
-        public void TryGetGregoryPatchBorders(
+        public void SetupGregoryPatch(
             SurfaceSceneModel s1, 
             SurfaceSceneModel s2, 
             SurfaceSceneModel s3)
@@ -219,6 +220,16 @@ namespace SimpleCAD.Source.Environment
                     }
                 }
             }
+        }
+
+        public void SetupIntersection(
+            IParametricSurface s1,
+            IParametricSurface s2)
+        {
+            var point = IntersectionManager.Instance.FindIntersection(s1, s2);
+            var model = new PointSceneModel("Starting point");
+            AddModel(model);
+            model.Translate(point);
         }
 
         public void AddModel(GregoryPatchSceneModel model)

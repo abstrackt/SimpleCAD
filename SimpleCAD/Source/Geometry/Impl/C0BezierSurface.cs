@@ -4,6 +4,7 @@ using OpenTK.Mathematics;
 using SharpSceneSerializer.DTOs.Enums;
 using SimpleCAD.Source.Environment;
 using SimpleCAD.Source.GUI;
+using SimpleCAD.Source.Intersections;
 using SimpleCAD.Source.Utils;
 using System;
 using System.Collections.Generic;
@@ -145,14 +146,6 @@ namespace SimpleCAD.Source.Geometry
             ImGui.DragInt("Divisions (U)", ref _tessU, 0.1f, 1, 64);
             ImGui.SetNextItemWidth(100f);
             ImGui.DragInt("Divisions (V)", ref _tessV, 0.1f, 1, 64);
-
-            if (ImGui.Button("Sample u = 0.2, v = 0.3"))
-            {
-                var model = new PointSceneModel("Sampled point");
-                Scene.Instance.AddModel(model);
-                var pos = Sample(0.2f, 0.3f);
-                model.Translate(pos);
-            }
         }
 
         public Vector3 Sample(float u, float v)

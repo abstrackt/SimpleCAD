@@ -73,7 +73,7 @@ namespace SimpleCAD.Source.GUI
 
             RecreateFontDeviceTexture();
 
-            string VertexSource = @"#version 330 core
+            string VertexSource = @"#version 400
 
 uniform mat4 projection_matrix;
 
@@ -90,7 +90,7 @@ void main()
     color = in_color;
     texCoord = in_texCoord;
 }";
-            string FragmentSource = @"#version 330 core
+            string FragmentSource = @"#version 400
 
 uniform sampler2D in_fontTexture;
 
@@ -315,7 +315,6 @@ void main()
             draw_data.ScaleClipRects(io.DisplayFramebufferScale);
 
             GL.Enable(EnableCap.Blend);
-            GL.Enable(EnableCap.ScissorTest);
             GL.BlendEquation(BlendEquationMode.FuncAdd);
             GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
             GL.Disable(EnableCap.CullFace);
@@ -354,7 +353,6 @@ void main()
             }
 
             GL.Disable(EnableCap.Blend);
-            GL.Disable(EnableCap.ScissorTest);
         }
 
         public void Dispose()

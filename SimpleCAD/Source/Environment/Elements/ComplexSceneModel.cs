@@ -25,6 +25,8 @@ namespace SimpleCAD.Source.Environment
         private List<VirtualPoint> _virtualPoints;
 
         private IControlPointGeometry _geometry;
+        public bool HasParametricGeometry => _geometry is IParametricSurface;
+        public IParametricSurface ParametricGeometry => (IParametricSurface)_geometry;
 
         private bool _immutable;
         private bool _removePoints;

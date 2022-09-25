@@ -209,7 +209,7 @@ namespace SimpleCAD.Source
 
             if (model.Deletable)
             {
-                if (ImGui.Button("Delete##" + index))
+                if (ImGui.Button("Delete##" + index + "P"))
                 {
                     scene.RemoveModel(model);
                 }
@@ -218,21 +218,21 @@ namespace SimpleCAD.Source
 
             if (!selection.IsSelected(model))
             {
-                if (ImGui.Button("Select##" + index))
+                if (ImGui.Button("Select##" + index + "P"))
                 {
                     selection.Add(model);
                 }
             }
             else
             {
-                if (ImGui.Button("Deselect##" + index))
+                if (ImGui.Button("Deselect##" + index + "P"))
                 {
                     selection.Remove(model);
                 }
             }
 
             ImGui.SameLine();
-            ImGui.InputText("##SceneModel" + index, model.name, SceneModel.MAX_NAME_LEN);
+            ImGui.InputText("##SceneModel" + index + "P", model.name, SceneModel.MAX_NAME_LEN);
 
             ImGui.Separator();
         }
@@ -242,7 +242,7 @@ namespace SimpleCAD.Source
             var scene = Scene.Instance;
             var selection = SelectionManager.Instance;
 
-            if (ImGui.Button("Delete##" + index))
+            if (ImGui.Button("Delete##" + index + "B"))
             {
                 scene.RemoveModel(model);
             }
@@ -250,21 +250,21 @@ namespace SimpleCAD.Source
             
             if (!selection.IsSelected(model))
             {
-                if (ImGui.Button("Select##" + index))
+                if (ImGui.Button("Select##" + index + "B"))
                 {
                     selection.Add(model);
                 }
             }
             else
             {
-                if (ImGui.Button("Deselect##" + index))
+                if (ImGui.Button("Deselect##" + index + "B"))
                 {
                     selection.Remove(model);
                 }
             }
 
             ImGui.SameLine();
-            ImGui.InputText("##SceneModel" + index, model.name, SceneModel.MAX_NAME_LEN);
+            ImGui.InputText("##SceneModel" + index + "B", model.name, SceneModel.MAX_NAME_LEN);
             
             ImGui.Separator();
         }
@@ -283,20 +283,20 @@ namespace SimpleCAD.Source
                 ImGui.SameLine();
                 if (!selection.IsSelected(model))
                 {
-                    if (ImGui.Button("Select##" + index))
+                    if (ImGui.Button("Select##" + index + "C"))
                     {
                         selection.Add(model);
                     }
                 }
                 else
                 {
-                    if (ImGui.Button("Deselect##" + index))
+                    if (ImGui.Button("Deselect##" + index + "C"))
                     {
                         selection.Remove(model);
                     }
                 }
                 ImGui.SameLine();
-                ImGui.InputText("##SceneModel" + index, model.name, SceneModel.MAX_NAME_LEN);
+                ImGui.InputText("##SceneModel" + index + "C", model.name, SceneModel.MAX_NAME_LEN);
             }
             ImGui.Separator();
         }

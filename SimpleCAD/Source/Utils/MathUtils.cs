@@ -2,11 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
-using OpenTK;
 using OpenTK.Mathematics;
-using Geom = SharpSceneSerializer.DTOs.GeometryObjects;
-using Enums = SharpSceneSerializer.DTOs.Enums;
 using Types = SharpSceneSerializer.DTOs.Types;
 
 namespace SimpleCAD.Source.Utils
