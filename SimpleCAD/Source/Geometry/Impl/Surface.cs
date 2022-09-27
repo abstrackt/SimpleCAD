@@ -68,7 +68,7 @@ namespace SimpleCAD.Source.Geometry
             {
                 for (int v = 0; v < PatchSize; v++)
                 {
-                    points[u, v] = controlPoints[startU + u, startV + v];
+                    points[u, v] = controlPoints[(startU + u) % controlPoints.GetLength(0), (startV + v) % controlPoints.GetLength(1)];
                 }
             }
 

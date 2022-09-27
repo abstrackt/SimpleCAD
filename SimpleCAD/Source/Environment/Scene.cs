@@ -226,10 +226,14 @@ namespace SimpleCAD.Source.Environment
             IParametricSurface s1,
             IParametricSurface s2)
         {
-            var point = IntersectionManager.Instance.FindIntersection(s1, s2);
-            var model = new PointSceneModel("Starting point");
-            AddModel(model);
-            model.Translate(point);
+            var points = IntersectionManager.Instance.FindIntersection(s1, s2);
+            for (int i = 0; i < points.Count; i++)
+            {
+                var point = points[i];
+                var model = new PointSceneModel("Intersection point " + i);
+                AddModel(model);
+                model.Translate(point);
+            }
         }
 
         public void AddModel(GregoryPatchSceneModel model)
