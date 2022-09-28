@@ -1,8 +1,4 @@
-﻿using OpenTK.Graphics;
-using System.Collections.Generic;
-using OpenTK;
-using System;
-using SimpleCAD.Source.Geometry;
+﻿using SimpleCAD.Source.Geometry;
 using SimpleCAD.Source.Utils;
 using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
@@ -19,6 +15,7 @@ namespace SimpleCAD.Source.Environment
             pointModels = new List<PointSceneModel>();
             basicModels = new List<SimpleSceneModel>();
             complexModels = new List<ComplexSceneModel>();
+            intersections = new List<IntersectionSceneModel>();
 
             camera.TranslateCamera(new Vector3(0, 3, 4));
             camera.ChangeViewportConfig(60, 1, 40, false);
@@ -33,6 +30,43 @@ namespace SimpleCAD.Source.Environment
             _modelDict = new Dictionary<uint, SceneModel>(); 
 
             cursorPos = Vector3.Zero;
+        }
+
+        public bool IsPartOfIntersection(SimpleSceneModel simpleSceneModel)
+        {
+            foreach (var intersect in intersections)
+            {
+                if (intersect.M1 == simpleSceneModel || intersect.M2 == simpleSceneModel)
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        public bool IsPartOfIntersection(ComplexSceneModel complexSceneModel)
+        {
+            foreach (var intersect in intersections)
+            {
+                if (intersect.M1 == complexSceneModel || intersect.M2 == complexSceneModel)
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        public bool IsPartOfIntersection(PointSceneModel simpleSceneModel)
+        {
+            foreach (var complex in complexModels)
+            {
+                if (complex.ControlPoints.Contains(simpleSceneModel) && IsPartOfIntersection(complex))
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         private static Scene instance = null;
@@ -53,6 +87,7 @@ namespace SimpleCAD.Source.Environment
         public List<PointSceneModel> pointModels;
         public List<SimpleSceneModel> basicModels;
         public List<ComplexSceneModel> complexModels;
+        public List<IntersectionSceneModel> intersections;
         public SceneModel capturedModel;
         public VirtualPoint capturedPoint;
         public Vector3 cursorPos;
@@ -93,6 +128,7 @@ namespace SimpleCAD.Source.Environment
             pointModels.Clear();
             basicModels.Clear();
             complexModels.Clear();
+            intersections.Clear();
             SelectionManager.Instance.Clear();
             _id = 0;
             _modelDict.Clear();
@@ -114,6 +150,11 @@ namespace SimpleCAD.Source.Environment
             for (int i = 0; i < complexModels.Count; i++)
             {
                 complexModels[i].Refresh();
+            }
+
+            for (int i = 0; i < intersections.Count; i++)
+            {
+                intersections[i].Refresh();
             }
         }
 
@@ -223,17 +264,14 @@ namespace SimpleCAD.Source.Environment
         }
 
         public void SetupIntersection(
-            IParametricSurface s1,
-            IParametricSurface s2)
+            SceneModel m1,
+            SceneModel m2)
         {
-            var points = IntersectionManager.Instance.FindIntersection(s1, s2);
-            for (int i = 0; i < points.Count; i++)
-            {
-                var point = points[i];
-                var model = new PointSceneModel("Intersection point " + i);
-                AddModel(model);
-                model.Translate(point);
-            }
+            List<Vector3> points = IntersectionManager.Instance.FindIntersection(m1.ParametricGeometry, m2.ParametricGeometry);
+            var model = new IntersectionSceneModel(new C2InterpolatingCurve(), "Intersection", m1, m2);
+
+            model.SetPoints(points);
+            AddModel(model);
         }
 
         public void AddModel(GregoryPatchSceneModel model)
@@ -263,6 +301,12 @@ namespace SimpleCAD.Source.Environment
             if (setPoints)
                 model.SetPoints(SelectionManager.Instance.SelectedPoints);
             complexModels.Add(model);
+            _modelDict.Add(model.id, model);
+        }
+
+        public void AddModel(IntersectionSceneModel model)
+        {
+            intersections.Add(model);
             _modelDict.Add(model.id, model);
         }
 
@@ -331,9 +375,12 @@ namespace SimpleCAD.Source.Environment
 
         public void RemoveModel(SimpleSceneModel model)
         {
-            SelectionManager.Instance.Remove(model);
-            basicModels.Remove(model);
-            _modelDict.Remove(model.id);
+            if (basicModels.Contains(model))
+            {
+                SelectionManager.Instance.Remove(model);
+                basicModels.Remove(model);
+                _modelDict.Remove(model.id);
+            }
         }
 
         public void RemoveModel(ComplexSceneModel model)
@@ -351,6 +398,16 @@ namespace SimpleCAD.Source.Environment
 
                 SelectionManager.Instance.Remove(model);
                 complexModels.Remove(model);
+                _modelDict.Remove(model.id);
+            }
+        }
+
+        public void RemoveModel(IntersectionSceneModel model)
+        {
+            if (intersections.Contains(model))
+            {
+                SelectionManager.Instance.Remove(model);
+                intersections.Remove(model);
                 _modelDict.Remove(model.id);
             }
         }
@@ -380,6 +437,11 @@ namespace SimpleCAD.Source.Environment
             for (int i = 0; i < complexModels.Count; i++)
             {
                 elementList.Add(complexModels[i]);
+            }
+
+            for (int i = 0; i < intersections.Count; i++)
+            {
+                elementList.Add(intersections[i]);
             }
 
             if (SelectionManager.Instance.SimpleCount > 1)

@@ -1,14 +1,11 @@
 ﻿using ImGuiNET;
-using OpenTK;
 using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
 using SharpSceneSerializer.DTOs.Interfaces;
 using SimpleCAD.Source.Geometry;
 using SimpleCAD.Source.GUI;
 using SimpleCAD.Source.Utils;
-using System;
 using Geom = SharpSceneSerializer.DTOs.GeometryObjects;
-using Enums = SharpSceneSerializer.DTOs.Enums;
 using Types = SharpSceneSerializer.DTOs.Types;
 
 namespace SimpleCAD.Source.Environment
@@ -20,6 +17,9 @@ namespace SimpleCAD.Source.Environment
         public Vector3 Rotation => _rot;
         public Vector3 Scale => _scale;
         public override Matrix4 Transform => _transform;
+        public override bool MovementLocked => Scene.Instance.IsPartOfIntersection(this);
+        public override bool HasParametricGeometry => false;
+        public override IParametricSurface ParametricGeometry => null;
 
         private Vector3 _pos;
         private Vector3 _rot;
@@ -44,6 +44,9 @@ namespace SimpleCAD.Source.Environment
 
         public override void Translate(Vector3 translation, bool additive = false)
         {
+            if (MovementLocked)
+                return;
+
             _pos = additive ? _pos + translation : translation;
 
             RefreshMatrices();

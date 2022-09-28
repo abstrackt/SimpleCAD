@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using ImGuiNET;
-using OpenTK;
+﻿using ImGuiNET;
 using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
 using SharpSceneSerializer.DTOs.Interfaces;
@@ -21,12 +18,12 @@ namespace SimpleCAD.Source.Environment
         public override Vector3 Position => Vector3.Zero;
         public override Matrix4 Transform => Matrix4.Identity;
 
+        public override bool MovementLocked => Scene.Instance.IsPartOfIntersection(this);
+
         private List<PointSceneModel> _controlPoints;
         private List<VirtualPoint> _virtualPoints;
 
         private IControlPointGeometry _geometry;
-        public bool HasParametricGeometry => _geometry is IParametricSurface;
-        public IParametricSurface ParametricGeometry => (IParametricSurface)_geometry;
 
         private bool _immutable;
         private bool _removePoints;
@@ -79,14 +76,12 @@ namespace SimpleCAD.Source.Environment
 
         public virtual void ReplacePoint(PointSceneModel oldPoint, PointSceneModel newPoint)
         {
-            bool changed = false;
 
             for (int i = 0; i < _controlPoints.Count; i++)
             {
                 if (_controlPoints[i] == oldPoint)
                 {
                     _controlPoints[i] = newPoint;
-                    changed = true;
                 }  
             }      
         }
@@ -140,6 +135,9 @@ namespace SimpleCAD.Source.Environment
 
         public override void Translate(Vector3 translation, bool additive = false)
         {
+            if (MovementLocked)
+                return;
+
             foreach (var point in _controlPoints)
             {
                 point.Translate(translation, additive);
@@ -162,19 +160,6 @@ namespace SimpleCAD.Source.Environment
                 }
             }
             base.AfterRendering();
-        }
-
-        protected override bool TryUpdateMeshColor()
-        {
-            var colorable = _geometry as IColorable;
-            if (colorable != null)
-            {
-                var last = colorable.GetColor();
-                var mainColor = SelectionManager.Instance.IsSelected(this) ? ColorPalette.SelectedColor : ColorPalette.DeselectedColor;
-                colorable.SetColor(mainColor);
-                return last != colorable.GetColor();
-            }
-            return false;
         }
 
         public override void DrawElementGUI()

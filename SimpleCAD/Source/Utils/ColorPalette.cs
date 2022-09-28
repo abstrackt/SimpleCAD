@@ -10,6 +10,8 @@ namespace SimpleCAD.Source.Utils
 {
     public static class ColorPalette
     {
+        public readonly static Color4 IntersectionColor = Color4.PapayaWhip;
+        public readonly static Color4 SelectedIntersectionColor = Color4.Yellow;
         public readonly static Color4 DeselectedColor = Color4.LightGray;
         public readonly static Color4 SelectedColor = Color4.Orange;
         public readonly static Color4 MidpointColor = Color4.Yellow;

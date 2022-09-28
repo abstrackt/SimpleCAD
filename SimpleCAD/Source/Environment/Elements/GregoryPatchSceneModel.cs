@@ -1,5 +1,6 @@
 ﻿using OpenTK.Graphics.OpenGL4;
 using SharpSceneSerializer.DTOs.Interfaces;
+using SimpleCAD.Source.Geometry;
 using SimpleCAD.Source.Geometry.Impl;
 
 namespace SimpleCAD.Source.Environment
@@ -7,6 +8,9 @@ namespace SimpleCAD.Source.Environment
     public class GregoryPatchSceneModel : ComplexSceneModel
     {
         private GregoryPatch _patch;
+
+        public override bool HasParametricGeometry => false;
+        public override IParametricSurface ParametricGeometry => null;
 
         public GregoryPatchSceneModel(GregoryPatch geometry, string name) : base(geometry, name, PrimitiveType.Patches, true, false)
         {

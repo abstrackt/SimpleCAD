@@ -301,6 +301,38 @@ namespace SimpleCAD.Source
             ImGui.Separator();
         }
 
+        private void DrawIntersectionModelGUI(IntersectionSceneModel model, int index)
+        {
+            var scene = Scene.Instance;
+            var selection = SelectionManager.Instance;
+
+            if (ImGui.Button("Delete##" + index))
+            {
+                scene.RemoveModel(model);
+            }
+            else
+            {
+                ImGui.SameLine();
+                if (!selection.IsSelected(model))
+                {
+                    if (ImGui.Button("Select##" + index + "I"))
+                    {
+                        selection.Add(model);
+                    }
+                }
+                else
+                {
+                    if (ImGui.Button("Deselect##" + index + "I"))
+                    {
+                        selection.Remove(model);
+                    }
+                }
+                ImGui.SameLine();
+                ImGui.InputText("##SceneModel" + index + "I", model.name, SceneModel.MAX_NAME_LEN);
+            }
+            ImGui.Separator();
+        }
+
         private void DrawScenePanel()
         {
             var scene = Scene.Instance;
@@ -335,6 +367,11 @@ namespace SimpleCAD.Source
                 for (int i = 0; i < scene.complexModels.Count; i++)
                 {
                     DrawComplexModelGUI(scene.complexModels[i], scene.basicModels.Count + i);
+                }
+
+                for (int i = 0; i < scene.intersections.Count; i++)
+                {
+                    DrawIntersectionModelGUI(scene.intersections[i], scene.basicModels.Count + scene.complexModels.Count + i);
                 }
 
                 if (ImGui.Button("+", new System.Numerics.Vector2(20, 20)))

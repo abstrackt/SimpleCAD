@@ -84,7 +84,7 @@ namespace SimpleCAD.Source.Environment
             shader = new Shader(_vertPath, _fragPath, _tessControlPath, _tessEvalPath);
         }
 
-        protected virtual void RegenMesh()
+        protected void RegenMesh()
         {
             (var verts, var indices) = Geometry.GetMesh();
 

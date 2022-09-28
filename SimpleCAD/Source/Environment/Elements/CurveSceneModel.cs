@@ -1,10 +1,8 @@
-﻿using System;
-using OpenTK.Graphics.OpenGL4;
+﻿using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
 using SharpSceneSerializer.DTOs.Interfaces;
 using SimpleCAD.Source.Geometry;
 using Geom = SharpSceneSerializer.DTOs.GeometryObjects;
-using Types = SharpSceneSerializer.DTOs.Types;
 
 namespace SimpleCAD.Source.Environment 
 {
@@ -12,6 +10,9 @@ namespace SimpleCAD.Source.Environment
     {
         private LineRenderer _lines;
         private AdaptiveCurve _curve;
+
+        public override bool HasParametricGeometry => false;
+        public override IParametricSurface ParametricGeometry => null;
 
         public CurveSceneModel(AdaptiveCurve geometry, string name) : base(geometry, name, PrimitiveType.Patches)
         {
@@ -23,6 +24,12 @@ namespace SimpleCAD.Source.Environment
             SetTesselationShader("bezierCurve.tesc", "bezierCurve.tese");
         }
 
+        protected override void BeforeRendering()
+        {
+            shader.SetMatrix4("model", Matrix4.Identity);
+            base.BeforeRendering();
+        }
+
         protected override void AfterRendering()
         {
             base.AfterRendering();
@@ -31,7 +38,7 @@ namespace SimpleCAD.Source.Environment
 
         public override void Render()
         {
-            base.BeforeRendering();
+            BeforeRendering();
             shader.Use();
             GL.BindVertexArray(_vertexArray);
             GL.PatchParameter(PatchParameterInt.PatchVertices, 4);

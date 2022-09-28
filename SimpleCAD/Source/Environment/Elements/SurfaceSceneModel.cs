@@ -32,6 +32,9 @@ namespace SimpleCAD.Source.Environment
         public (int u, int v) Tesselation => _surface.TesselationLevel;
         public List<SurfacePatch> Patches => new List<SurfacePatch>(_patches);
 
+        public override bool HasParametricGeometry => _surface is IParametricSurface;
+        public override IParametricSurface ParametricGeometry => (IParametricSurface)_surface;
+
         public SurfaceSceneModel(Surface geometry, string name) : base(geometry, name, PrimitiveType.Patches, true, true)
         {
             _lines = new LineRenderer(new LineSet());

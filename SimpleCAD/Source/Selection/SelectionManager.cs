@@ -15,6 +15,7 @@ namespace SimpleCAD.Source.Utils
         private SelectionManager() {
             _selectedSimpleModels = new HashSet<SceneModel>();
             _selectedComplexModels = new HashSet<ComplexSceneModel>();
+            _selectedIntersections = new HashSet<IntersectionSceneModel>();
             _selectionCache = new Dictionary<SceneModel, Matrix4>();
         }
 
@@ -36,6 +37,7 @@ namespace SimpleCAD.Source.Utils
         public List<PointSceneModel> SelectedPoints => _selectedSimpleModels
             .Where(x => x is PointSceneModel).Cast<PointSceneModel>()
             .ToList();
+
         public List<SurfaceSceneModel> SelectedBezierSurfaces => _selectedComplexModels
             .Where(x => (x is SurfaceSceneModel surf) && 
             (surf.Surface is C0BezierSurface) && 
@@ -62,6 +64,7 @@ namespace SimpleCAD.Source.Utils
         private HashSet<SceneModel> _selectedSimpleModels;
         private Dictionary<SceneModel, Matrix4> _selectionCache;
         private HashSet<ComplexSceneModel> _selectedComplexModels;
+        private HashSet<IntersectionSceneModel> _selectedIntersections;
 
         public void Add(SceneModel model)
         {
@@ -72,6 +75,12 @@ namespace SimpleCAD.Source.Utils
         public void Add(ComplexSceneModel model)
         {
             _selectedComplexModels.Add(model);
+            ResetState();
+        }
+
+        public void Add(IntersectionSceneModel model)
+        {
+            _selectedIntersections.Add(model);
             ResetState();
         }
 
@@ -88,10 +97,17 @@ namespace SimpleCAD.Source.Utils
                 _selectedComplexModels.Remove(model);
         }
 
+        public void Remove(IntersectionSceneModel model)
+        {
+            if (_selectedIntersections.Contains(model))
+                _selectedIntersections.Remove(model);
+        }
+
         public void Clear()
         {
             _selectedComplexModels.Clear();
             _selectedSimpleModels.Clear();
+            _selectedIntersections.Clear();
             _selectionCache.Clear();
         }
 
@@ -119,7 +135,7 @@ namespace SimpleCAD.Source.Utils
 
         public bool IsSelected(SceneModel model)
         {
-            return _selectedSimpleModels.Contains(model) || _selectedComplexModels.Contains(model);
+            return _selectedSimpleModels.Contains(model) || _selectedComplexModels.Contains(model) || _selectedIntersections.Contains(model);
         }
 
         public int SelectedCount()
@@ -245,9 +261,7 @@ namespace SimpleCAD.Source.Utils
             {
                 if (ImGui.Button("Find intersection"))
                 {
-                    Scene.Instance.SetupIntersection(
-                        parametricSurfaces[0].ParametricGeometry,
-                        parametricSurfaces[1].ParametricGeometry);
+                    Scene.Instance.SetupIntersection(parametricSurfaces[0], parametricSurfaces[1]);
                 }
             }
 
@@ -288,6 +302,17 @@ namespace SimpleCAD.Source.Utils
                 ImGui.Text("Now editing");
 
                 foreach (var model in _selectedSimpleModels)
+                {
+                    ImGui.BulletText(model.Name);
+                }
+            }
+            else if (_selectedIntersections.Count != 0)
+            {
+                ImGui.Separator();
+
+                ImGui.Text("Now editing");
+
+                foreach (var model in _selectedIntersections)
                 {
                     ImGui.BulletText(model.Name);
                 }

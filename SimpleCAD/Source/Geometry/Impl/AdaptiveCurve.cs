@@ -1,13 +1,6 @@
-﻿using OpenTK;
-using OpenTK.Graphics;
+﻿
 using OpenTK.Mathematics;
-using SharpSceneSerializer.DTOs.Enums;
-using SimpleCAD.Source.Environment;
 using SimpleCAD.Source.Utils;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using DTO = SharpSceneSerializer.DTOs;
 
 
 namespace SimpleCAD.Source.Geometry
@@ -15,7 +8,9 @@ namespace SimpleCAD.Source.Geometry
     public abstract class AdaptiveCurve : IControlPointGeometry, IColorable
     {
         protected Color4 color;
+
         protected List<Vector3> controlPoints;
+       
         protected List<Vertex> vertexCache;
 
         public abstract int SegmentSize { get; }

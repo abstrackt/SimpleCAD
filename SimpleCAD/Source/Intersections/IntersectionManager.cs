@@ -60,6 +60,7 @@ namespace SimpleCAD.Source.Intersections
             {
                 var other = FindIntersectionPoints(sol, -0.05f, s1, s2, out var _);
                 other = other.GetRange(1, other.Count - 1);
+                other.Reverse();
                 other.AddRange(points);
                 points = other;
             }

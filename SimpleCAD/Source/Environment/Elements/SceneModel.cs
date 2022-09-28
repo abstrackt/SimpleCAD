@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+﻿using System.Text;
 using OpenTK.Graphics.OpenGL4;
 using SimpleCAD.Source.Geometry;
 using SimpleCAD.Source.GUI;
@@ -21,7 +18,12 @@ namespace SimpleCAD.Source.Environment
         public string Name => Encoding.ASCII.GetString(name).Trim('\0');
         public abstract Vector3 Position { get; }
         public abstract Matrix4 Transform { get; }
-        
+
+        public abstract bool MovementLocked { get; }
+
+        public abstract bool HasParametricGeometry { get; }
+        public abstract IParametricSurface ParametricGeometry { get; }
+
 
         public SceneModel(IGeometry geometry, string name, PrimitiveType primitives) : base(geometry)
         {
@@ -57,7 +59,11 @@ namespace SimpleCAD.Source.Environment
             return false;
         }
 
-        public abstract void Translate(Vector3 translation, bool additive = false);
+        public virtual void Translate(Vector3 translation, bool additive = false)
+        {
+            if (MovementLocked)
+                return;
+        }
 
         protected override void BeforeRendering()
         {
