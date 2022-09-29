@@ -272,10 +272,11 @@ namespace SimpleCAD.Source.Environment
             m1.SetIntersectTexture(textures.t1, IntersectionManager.DEFAULT_TEXTURE_RES);
             m2.SetIntersectTexture(textures.t2, IntersectionManager.DEFAULT_TEXTURE_RES);
 
-            m1.ToggleTrimming(true);
-            m2.ToggleTrimming(true);
-            m1.SetTrimTarget(127);
-            m2.SetTrimTarget(127);
+            m1.ToggleTrimming(false);
+            m2.ToggleTrimming(false);
+
+            m1.SetTrimTarget(255);
+            m2.SetTrimTarget(255);
 
             AddModel(model);
         }
@@ -470,6 +471,11 @@ namespace SimpleCAD.Source.Environment
             for (int i = 0; i < complexModels.Count; i++)
             {
                 complexModels[i].Dispose();
+            }
+
+            for (int i = 0; i < intersections.Count; i++)
+            {
+                intersections[i].Dispose();
             }
         }
     }

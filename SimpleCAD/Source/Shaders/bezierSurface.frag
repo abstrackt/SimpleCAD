@@ -16,13 +16,13 @@ void main()
 	int u_idx = tese_primitive%patches_u;
     int v_idx = tese_primitive/patches_u;
 
-	vec2 tex_coords = vec2((tese_tex.y + u_idx)/patches_u, (tese_tex.x + v_idx)/patches_v);
+	vec2 tex_coords = vec2((tese_tex.x + u_idx)/patches_u, (tese_tex.y + v_idx)/patches_v);
 
 	if (trim != 0) 
 	{
 		float sampled = texture(mask, tex_coords).r * 255.0;
 
-		if (sampled < target)
+		if (sampled == target)
 			discard;
 	}
 

@@ -41,10 +41,10 @@ void main() {
 	float bv2 = 3. * v * v * (1.-v);
 	float bv3 = v * v * v;
 
-	vec4 p = bu0 * ( bv0*p00 + bv1*p01 + bv2*p02 + bv3*p03 ) 
-	+ bu1 * ( bv0*p10 + bv1*p11 + bv2*p12 + bv3*p13 )
-	+ bu2 * ( bv0*p20 + bv1*p21 + bv2*p22 + bv3*p23 )
-	+ bu3 * ( bv0*p30 + bv1*p31 + bv2*p32 + bv3*p33 );
+	vec4 p = bv0 * ( bu0*p00 + bu1*p01 + bu2*p02 + bu3*p03 ) 
+	+ bv1 * ( bu0*p10 + bu1*p11 + bu2*p12 + bu3*p13 )
+	+ bv2 * ( bu0*p20 + bu1*p21 + bu2*p22 + bu3*p23 )
+	+ bv3 * ( bu0*p30 + bu1*p31 + bu2*p32 + bu3*p33 );
 
 	gl_Position = p * view * projection;
 	

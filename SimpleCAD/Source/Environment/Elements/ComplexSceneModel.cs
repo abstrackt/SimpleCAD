@@ -28,6 +28,8 @@ namespace SimpleCAD.Source.Environment
 
         private bool _immutable;
         private bool _removePoints;
+        private bool _trimZero;
+        private bool _trim;
 
         // Control point list cannot be modified
         public bool Immutable => _immutable;
@@ -237,7 +239,32 @@ namespace SimpleCAD.Source.Environment
             }
 
             if (_texture != null)
-                ImGui.Image((IntPtr)_texture.Handle, new (IntersectionManager.DEFAULT_TEXTURE_RES, IntersectionManager.DEFAULT_TEXTURE_RES));
+            {
+                ImGui.Separator();
+                ImGui.Text("Intersection");
+                ImGui.Image((IntPtr)_texture.Handle, new(270, 270));
+
+                
+                if (ImGui.Checkbox("Trim", ref _trim))
+                {
+                    ToggleTrimming(_trim);
+                }
+
+                if (ImGui.Button("Change trimming side"))
+                {
+                    if (_trimZero)
+                    {
+                        _trimZero = false;
+                        SetTrimTarget(255);
+                    }
+                    else
+                    {
+                        _trimZero = true;
+                        SetTrimTarget(0);
+                    }
+                }
+            }
+                
         }
 
         public abstract bool TrySerialize(out IGeometryObject serialized);
