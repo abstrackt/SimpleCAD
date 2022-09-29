@@ -2,6 +2,7 @@
 using OpenTK.Mathematics;
 using SimpleCAD.Source.Geometry;
 using SimpleCAD.Source.GUI;
+using SimpleCAD.Source.Intersections;
 using SimpleCAD.Source.Utils;
 
 namespace SimpleCAD.Source.Environment
@@ -22,15 +23,20 @@ namespace SimpleCAD.Source.Environment
 
         public C2InterpolatingCurve _curve;
 
+        public IntersectionData _data;
+
         public IntersectionSceneModel(
-            C2InterpolatingCurve curve, 
-            string name, 
+            C2InterpolatingCurve curve,
+            string name,
+            IntersectionData data,
             SceneModel m1, 
             SceneModel m2) : base(curve, name, PrimitiveType.Patches)
         {
             _m1 = m1;
             _m2 = m2;
+            _data = data;
             _curve = curve;
+            _curve.SetControlPoints(data.points);
 
             SetVertShader("bezierCurve.vert");
             SetFragShader("bezierCurve.frag");
@@ -45,7 +51,7 @@ namespace SimpleCAD.Source.Environment
 
         public override void Render()
         {
-            shader.SetMatrix4("model", Matrix4.Identity);
+            shader.SetMatrix4("model", Matrix4.Identity); 
             base.BeforeRendering();
             shader.Use();
             GL.BindVertexArray(_vertexArray);
@@ -57,11 +63,6 @@ namespace SimpleCAD.Source.Environment
         protected override void AfterRendering()
         {
             base.AfterRendering();
-        }
-
-        public void SetPoints(List<Vector3> points)
-        {
-            _curve.SetControlPoints(points);
         }
 
         protected override bool TryUpdateMeshColor()
@@ -87,3 +88,4 @@ namespace SimpleCAD.Source.Environment
         }
     }
 }
+ 

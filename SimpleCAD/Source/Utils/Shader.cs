@@ -137,26 +137,40 @@ namespace SimpleCAD.Source.Utils
 
         public void SetInt(string name, int data)
         {
+            if (!_uniformLocations.ContainsKey(name))
+                return;
             GL.UseProgram(handle);
             GL.Uniform1(_uniformLocations[name], data);
         }
 
         public void SetFloat(string name, float data)
         {
+            if (!_uniformLocations.ContainsKey(name))
+                return;
             GL.UseProgram(handle);
             GL.Uniform1(_uniformLocations[name], data);
         }
 
         public void SetMatrix4(string name, Matrix4 data)
         {
+            if (!_uniformLocations.ContainsKey(name))
+                return;
             GL.UseProgram(handle);
             GL.UniformMatrix4(_uniformLocations[name], true, ref data);
         }
 
         public void SetVector3(string name, Vector3 data)
         {
+            if (!_uniformLocations.ContainsKey(name))
+                return;
             GL.UseProgram(handle);
             GL.Uniform3(_uniformLocations[name], data);
+        }
+
+        public void SetSampler(string name, int unit)
+        {
+            GL.UseProgram(handle);
+            GL.Uniform1(_uniformLocations[name], unit);
         }
 
         private bool disposedValue = false;

@@ -1,11 +1,14 @@
-﻿#version 400
+﻿#version 460
 layout( quads, equal_spacing, cw ) in;
 
 uniform mat4 view;
 uniform mat4 projection;
 
 in vec4 tesc_colors[];
+flat in int tesc_primitives[];
 out vec4 tese_color;
+out vec2 tese_tex;
+flat out int tese_primitive;
 
 void main() {
 	vec4 p00 = gl_in[ 0 ].gl_Position;
@@ -44,6 +47,8 @@ void main() {
 	+ bu3 * ( bv0*p30 + bv1*p31 + bv2*p32 + bv3*p33 );
 
 	gl_Position = p * view * projection;
-
+	
 	tese_color = tesc_colors[0];
+	tese_tex = vec2(u, v);
+	tese_primitive = tesc_primitives[0];
 }

@@ -22,6 +22,10 @@ namespace SimpleCAD.Source.Environment
 
         private string _vertPath, _fragPath, _tessControlPath, _tessEvalPath;
 
+        protected Texture _texture;
+        private int _trim;
+        private int _target;
+
         protected IGeometry Geometry { get; private set; }
 
         public RenderableElement(IGeometry geometry) 
@@ -63,11 +67,38 @@ namespace SimpleCAD.Source.Environment
             ReloadShader();
         }
 
+        public void SetIntersectTexture(byte[] pixels, int texRes)
+        {
+            _texture = Texture.Load(pixels, PixelFormat.Red, texRes);
+        }
+
+        public void ToggleTrimming(bool value)
+        {
+            if (value)
+            {
+                shader.SetInt("trim", 1);
+            }
+            else
+            {
+                shader.SetInt("trim", 0);
+            }
+        }
+
+        public void SetTrimTarget(int value)
+        {
+            shader.SetInt("target", value);
+        }
+
         // Set shader constants, can be overriden if need be.
         public virtual void Render()
         {
             BeforeRendering();
             shader.Use();
+            if (_texture != null)
+            {
+                shader.SetSampler("mask", 0);
+                _texture.Use(TextureUnit.Texture0);
+            }
             GL.BindVertexArray(_vertexArray);
             GL.DrawElements(type, _indexCount, DrawElementsType.UnsignedInt, (IntPtr)0);
             AfterRendering();

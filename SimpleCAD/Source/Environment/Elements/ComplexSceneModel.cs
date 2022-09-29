@@ -4,6 +4,7 @@ using OpenTK.Mathematics;
 using SharpSceneSerializer.DTOs.Interfaces;
 using SimpleCAD.Source.Geometry;
 using SimpleCAD.Source.GUI;
+using SimpleCAD.Source.Intersections;
 using SimpleCAD.Source.Utils;
 
 
@@ -234,6 +235,9 @@ namespace SimpleCAD.Source.Environment
                     ImGui.Separator();
                 }
             }
+
+            if (_texture != null)
+                ImGui.Image((IntPtr)_texture.Handle, new (IntersectionManager.DEFAULT_TEXTURE_RES, IntersectionManager.DEFAULT_TEXTURE_RES));
         }
 
         public abstract bool TrySerialize(out IGeometryObject serialized);

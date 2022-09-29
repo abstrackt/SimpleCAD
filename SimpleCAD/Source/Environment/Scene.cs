@@ -172,10 +172,7 @@ namespace SimpleCAD.Source.Environment
             p2.Translate(pos, false);
         }
 
-        public void SetupGregoryPatch(
-            SurfaceSceneModel s1, 
-            SurfaceSceneModel s2, 
-            SurfaceSceneModel s3)
+        public void SetupGregoryPatch(SurfaceSceneModel s1, SurfaceSceneModel s2, SurfaceSceneModel s3)
         {
             // Find valid holes
             if (s1.TryGetCorners(out var c1) && s2.TryGetCorners(out var c2) && s3.TryGetCorners(out var c3))
@@ -263,14 +260,23 @@ namespace SimpleCAD.Source.Environment
             }
         }
 
-        public void SetupIntersection(
-            SceneModel m1,
-            SceneModel m2)
+        public void SetupIntersection(SceneModel m1,SceneModel m2)
         {
-            List<Vector3> points = IntersectionManager.Instance.FindIntersection(m1.ParametricGeometry, m2.ParametricGeometry);
-            var model = new IntersectionSceneModel(new C2InterpolatingCurve(), "Intersection", m1, m2);
+            var intersections = IntersectionManager.Instance;
 
-            model.SetPoints(points);
+            var result = intersections.FindIntersection(m1.ParametricGeometry, m2.ParametricGeometry);
+            var model = new IntersectionSceneModel(new C2InterpolatingCurve(), "Intersection", result, m1, m2);
+
+            var textures = intersections.GetIntersectTexture(m1.ParametricGeometry, m2.ParametricGeometry, result.parameters);
+
+            m1.SetIntersectTexture(textures.t1, IntersectionManager.DEFAULT_TEXTURE_RES);
+            m2.SetIntersectTexture(textures.t2, IntersectionManager.DEFAULT_TEXTURE_RES);
+
+            m1.ToggleTrimming(true);
+            m2.ToggleTrimming(true);
+            m1.SetTrimTarget(127);
+            m2.SetTrimTarget(127);
+
             AddModel(model);
         }
 

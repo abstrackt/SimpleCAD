@@ -8,6 +8,7 @@ namespace SimpleCAD.Source.Intersections
         private const float SUBDIV_PRECISION = 0.001f;
         private const int SUBDIV_ITERATIONS = 6;
         private const int NEWTON_ITERATIONS = 10;
+        public const int DEFAULT_TEXTURE_RES = 512;
 
         private static IntersectionManager instance = null;
         public static IntersectionManager Instance
@@ -22,50 +23,28 @@ namespace SimpleCAD.Source.Intersections
             }
         }
 
-        private struct Solution
-        {
-            public float u1, v1, u2, v2;
-
-            public void Wrap(IParametricSurface s1, IParametricSurface s2)
-            {
-                if ((u1 < 0 || u1 > s1.RangeU) && !s1.WrapU)
-                {
-                    u1 = Math.Clamp(u1, 0, s1.RangeU);
-                }
-
-                if ((v1 < 0 || v1 > s1.RangeV) && !s1.WrapV)
-                {
-                    v1 = Math.Clamp(v1, 0, s1.RangeV);
-                }
-
-                if ((u2 < 0 || u2 > s2.RangeU) && !s2.WrapU)
-                {
-                    u2 = Math.Clamp(u2, 0, s2.RangeU);
-                }
-
-                if ((v2 < 0 || v2 > s2.RangeV) && !s2.WrapV)
-                {
-                    v2 = Math.Clamp(v2, 0, s2.RangeV);
-                }
-            }
-        }
-
-        public List<Vector3> FindIntersection(IParametricSurface s1, IParametricSurface s2)
+        public IntersectionData FindIntersection(IParametricSurface s1, IParametricSurface s2)
         {
             var sol = FindStartingPoint(s1, s2);
 
-            var points = FindIntersectionPoints(sol, 0.05f, s1, s2, out var cycle);
+            var side1 = FindIntersectionPoints(sol, 0.02f, s1, s2, out var cycle);
 
             if (!cycle)
             {
-                var other = FindIntersectionPoints(sol, -0.05f, s1, s2, out var _);
-                other = other.GetRange(1, other.Count - 1);
-                other.Reverse();
-                other.AddRange(points);
-                points = other;
+                var side2 = FindIntersectionPoints(sol, -0.02f, s1, s2, out var _);
+
+                side2.points = side2.points.GetRange(1, side2.points.Count - 1);
+                side2.points.Reverse();
+                side2.points.AddRange(side1.points);
+                side1.points = side2.points;
+
+                side2.parameters = side2.parameters.GetRange(1, side2.parameters.Count - 1);
+                side2.parameters.Reverse();
+                side2.parameters.AddRange(side1.parameters);
+                side1.parameters = side2.parameters;
             }
 
-            return points;
+            return side1;
         }
 
         private Solution FindStartingPoint(IParametricSurface s1, IParametricSurface s2)
@@ -203,7 +182,7 @@ namespace SimpleCAD.Source.Intersections
                    (!s2.WrapV && (s.v2 > s2.RangeV || s.v2 < 0));
         }
 
-        private List<Vector3> FindIntersectionPoints(
+        private IntersectionData FindIntersectionPoints(
             Solution start, float step, 
             IParametricSurface s1, IParametricSurface s2,
             out bool hasCycle)
@@ -211,9 +190,11 @@ namespace SimpleCAD.Source.Intersections
             hasCycle = false;
 
             var points = new List<Vector3>();
+            var parameters = new List<Solution>();
             var startP = s1.Sample(start.u1, start.v1);
 
             points.Add(startP);
+            parameters.Add(start);
 
             var it = 0;
 
@@ -233,39 +214,145 @@ namespace SimpleCAD.Source.Intersections
                 {
                     var decr = Newton(next, step, p0, s1, s2);
 
-                    next = new Solution()
-                    {
-                        u1 = next.u1 - decr.u1,
-                        v1 = next.v1 - decr.v1,
-                        u2 = next.u2 - decr.u2,
-                        v2 = next.v2 - decr.v2
-                    };
+                    next -= decr;
 
                     if (OutsideRange(next, s1, s2))
+                    {
+                        var clamped = next;
+                        clamped.Clamp(s1, s2);
+                        var clampedP = s1.Sample(clamped.u1, clamped.v1);
+                        points.Add(clampedP);
+                        parameters.Add(clamped);
                         break;
+                    }
                 }
 
                 var lastP = points[points.Count - 1];
 
-                // Cycle
-                if ((startP - lastP).Length < step && points.Count > 6)
+                if (OutsideRange(next, s1, s2) || (p1 - p2).Length > Math.Abs(step)) 
                 {
-                    hasCycle = true;
-                    break;
-                }
-
-                if (OutsideRange(next, s1, s2) || (p1 - p2).Length > Math.Abs(step)) {
                     break;
                 }
 
                 var nextP = s1.Sample(next.u1, next.v1);
-
                 points.Add(nextP);
+                parameters.Add(next);
+
+                // Cycle
+                if ((startP - lastP).Length < step && points.Count > 4)
+                {
+                    hasCycle = true;
+                    points.AddRange(points.GetRange(0, Math.Min(100, points.Count)));
+                    break;
+                }
 
                 last = next;
             }
 
-            return points;
+            return new IntersectionData()
+            {
+                points = points,
+                parameters = parameters
+            };
+        }
+
+        private void Bresenham(Vector2 from, Vector2 to, byte value, int texRes, ref byte[] t)
+        {
+            var x1 = (int)(from.X * texRes);
+            var y1 = (int)(from.Y * texRes);
+            var x2 = (int)(to.X * texRes);
+            var y2 = (int)(to.Y * texRes);
+
+            int w = x2 - x1;
+            int h = y2 - y1;
+            int dx1 = 0, dy1 = 0, dx2 = 0, dy2 = 0;
+            if (w < 0) dx1 = -1; else if (w > 0) dx1 = 1;
+            if (h < 0) dy1 = -1; else if (h > 0) dy1 = 1;
+            if (w < 0) dx2 = -1; else if (w > 0) dx2 = 1;
+            int max = Math.Abs(w);
+            int min = Math.Abs(h);
+            if (!(max > min))
+            {
+                max = Math.Abs(h);
+                min = Math.Abs(w);
+                if (h < 0) dy2 = -1; else if (h > 0) dy2 = 1;
+                dx2 = 0;
+            }
+            int n = max >> 1;
+            for (int i = 0; i <= max; i++)
+            {
+                var idx = (texRes * y1 + x1);
+                if (idx >= 0 && idx < t.Length)
+                {
+                    t[idx] = value;
+                }
+                n += min;
+                if (!(n < max))
+                {
+                    n -= max;
+                    x1 += dx1;
+                    y1 += dy1;
+                }
+                else
+                {
+                    x1 += dx2;
+                    y1 += dy2;
+                }
+            }
+        }
+
+        private void FloodFill(Vector2 p, byte targetValue, byte replacementValue, int texRes, ref byte[] t)
+        {
+            var x = (int)p.X;
+            var y = (int)p.Y;
+
+            Stack<Vector2> pixels = new Stack<Vector2>();
+            pixels.Push(new Vector2(x, y));
+
+            while (pixels.Count > 0)
+            {
+                Vector2 a = pixels.Pop();
+                if (a.X < texRes && a.X >= 0 && a.Y < texRes && a.Y >= 0)
+                {
+                    if (t[(int)a.X + texRes * (int)a.Y] == targetValue)
+                    {
+                        t[(int)a.X + texRes * (int)a.Y] = replacementValue;
+                        pixels.Push(new Vector2(a.X - 1, a.Y));
+                        pixels.Push(new Vector2(a.X + 1, a.Y));
+                        pixels.Push(new Vector2(a.X, a.Y - 1));
+                        pixels.Push(new Vector2(a.X, a.Y + 1));
+                    }
+                }
+            }
+            
+            return;
+        }
+
+        public (byte[] t1, byte[] t2) GetIntersectTexture(
+            IParametricSurface s1, 
+            IParametricSurface s2, 
+            List<Solution> parameters, 
+            int texRes = DEFAULT_TEXTURE_RES)
+        {
+            var texSize = texRes * texRes;
+
+            var t1 = new byte[texSize];
+            var t2 = new byte[texSize];
+
+            for (int p = 1; p < parameters.Count; p++)
+            {
+                var from1 = parameters[p - 1].FirstScaled(s1.RangeU, s1.RangeV);
+                var from2 = parameters[p - 1].SecondScaled(s2.RangeU, s2.RangeV);
+                var to1 = parameters[p].FirstScaled(s1.RangeU, s1.RangeV);
+                var to2 = parameters[p].SecondScaled(s2.RangeU, s2.RangeV);
+                Bresenham(from1, to1, 128, texRes, ref t1);
+                Bresenham(from2, to2, 128, texRes, ref t2);
+            }
+
+            FloodFill(Vector2.Zero, 0, 255, texRes, ref t1);
+            FloodFill(Vector2.Zero, 0, 255, texRes, ref t2);
+
+            return (t1, t2);
         }
     }
 }

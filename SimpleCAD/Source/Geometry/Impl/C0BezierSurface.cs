@@ -1,16 +1,7 @@
 ﻿using ImGuiNET;
-using OpenTK;
 using OpenTK.Mathematics;
-using SharpSceneSerializer.DTOs.Enums;
-using SimpleCAD.Source.Environment;
 using SimpleCAD.Source.GUI;
-using SimpleCAD.Source.Intersections;
 using SimpleCAD.Source.Utils;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace SimpleCAD.Source.Geometry
 {
@@ -155,9 +146,20 @@ namespace SimpleCAD.Source.Geometry
             int patchU = (int)u;
             int patchV = (int)v;
 
+            if (u != 0 && u == (int)u)
+                patchU--;
+            if (v != 0 && v == (int)v)
+                patchV--;
+
             // Clamp u and v to 0-1 range;
-            u = u - (int)u;
-            v = v - (int)v;
+            while (u > 1)
+            {
+                u -= 1;
+            }
+            while (v > 1)
+            {
+                v -= 1;
+            }
 
             var p = GetPatchPoints(patchU, patchV);
 

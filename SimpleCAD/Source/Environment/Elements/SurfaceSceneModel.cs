@@ -44,6 +44,8 @@ namespace SimpleCAD.Source.Environment
             SetVertShader(geometry.VertexShader);
             SetFragShader(geometry.FragShader);
             SetTesselationShader(geometry.TescShader, geometry.TeseShader);
+
+            SetPatchData(_surface.PatchesU, _surface.PatchesV);
         }
 
         protected override void AfterRendering()
@@ -212,11 +214,22 @@ namespace SimpleCAD.Source.Environment
             shader.SetInt("tess_v", v);
         }
 
+        private void SetPatchData(int u, int v)
+        {
+            shader.SetInt("patches_u", u);
+            shader.SetInt("patches_v", v);
+        }
+
         public override void Render()
         {
             base.BeforeRendering();
             SetTesselationLevels(_surface.TesselationLevel.u, _surface.TesselationLevel.v);
             shader.Use();
+            if (_texture != null)
+            {
+                shader.SetSampler("mask", 0);
+                _texture.Use(TextureUnit.Texture0);
+            }
             GL.BindVertexArray(_vertexArray);
             GL.PatchParameter(PatchParameterInt.PatchVertices, _surface.PatchSize * _surface.PatchSize);
             GL.DrawArrays(type, 0, _vertexCount);

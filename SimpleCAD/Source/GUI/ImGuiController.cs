@@ -22,7 +22,7 @@ namespace SimpleCAD.Source.GUI
         private int _indexBuffer;
         private int _indexBufferSize;
 
-        private Texture _fontTexture;
+        private GUITexture _fontTexture;
         private GUIShader _guiShader;
 
         private Vector2i _windowSize;
@@ -130,7 +130,7 @@ void main()
             ImGuiIOPtr io = ImGui.GetIO();
             io.Fonts.GetTexDataAsRGBA32(out IntPtr pixels, out int width, out int height, out int bytesPerPixel);
 
-            _fontTexture = new Texture("ImGui Text Atlas", width, height, pixels);
+            _fontTexture = new GUITexture("ImGui Text Atlas", width, height, pixels);
             _fontTexture.SetMagFilter(TextureMagFilter.Linear);
             _fontTexture.SetMinFilter(TextureMinFilter.Linear);
 

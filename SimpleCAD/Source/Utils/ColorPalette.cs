@@ -1,16 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using OpenTK.Graphics;
-using OpenTK.Mathematics;
+﻿using OpenTK.Mathematics;
 
 namespace SimpleCAD.Source.Utils
 {
     public static class ColorPalette
     {
-        public readonly static Color4 IntersectionColor = Color4.PapayaWhip;
+        public readonly static Color4 IntersectionColor = Color4.LightGray;
         public readonly static Color4 SelectedIntersectionColor = Color4.Yellow;
         public readonly static Color4 DeselectedColor = Color4.LightGray;
         public readonly static Color4 SelectedColor = Color4.Orange;
