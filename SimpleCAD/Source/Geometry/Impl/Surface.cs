@@ -94,17 +94,17 @@ namespace SimpleCAD.Source.Geometry
 
             int currentU = 0, currentV = 0;
 
-            while(currentU + PatchSize <= (PointsU + (Wrap ? (PatchSize - PatchOffset) : 0)))
+            while(currentU * PatchOffset + PatchSize <= (PointsU + (Wrap ? (PatchSize - PatchOffset) : 0)))
             {
-                while (currentV + PatchSize <= PointsV)
+                while (currentV * PatchOffset + PatchSize <= PointsV)
                 {
-                    float currU = 0, currV = 0;
-                    for (int u = currentU; u < currentU + PatchSize; u++)
+                    float currU, currV;
+                    for (int u = currentU * PatchOffset; u < currentU * PatchOffset + PatchSize; u++)
                     {
-                        for (int v = currentV; v < currentV + PatchSize; v++)
+                        for (int v = currentV * PatchOffset; v < currentV * PatchOffset + PatchSize; v++)
                         {
-                            currU = u - currentU;
-                            currV = v - currentV;
+                            currU = u - currentU * PatchOffset;
+                            currV = v - currentV * PatchOffset;
 
                             var uWrap = u % PointsU;
                             var vWrap = v % PointsV;
@@ -120,17 +120,16 @@ namespace SimpleCAD.Source.Geometry
                                 vTex /= parametric.RangeV;
                                 uv = new Vector2(uTex, vTex);
                             }
-                            
 
                             vertexCache.Add(new Vertex(points[uWrap, vWrap], color, uv));
                         }
                     }
 
-                    currentV += PatchOffset;
+                    currentV += 1;
                 }
 
                 currentV = 0;
-                currentU += PatchOffset;
+                currentU += 1;
             }
         }
 
