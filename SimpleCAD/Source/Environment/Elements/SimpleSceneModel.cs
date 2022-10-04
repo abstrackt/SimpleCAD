@@ -18,13 +18,15 @@ namespace SimpleCAD.Source.Environment
         public Vector3 Scale => _scale;
         public override Matrix4 Transform => _transform;
         public override bool MovementLocked => Scene.Instance.IsPartOfIntersection(this);
-        public override bool HasParametricGeometry => false;
-        public override IParametricSurface ParametricGeometry => null;
+        public override bool HasParametricGeometry => Geometry is IParametricSurface;
+        public override IParametricSurface ParametricGeometry => (IParametricSurface)Geometry;
 
         private Vector3 _pos;
         private Vector3 _rot;
         private Vector3 _scale;
         private Matrix4 _transform;
+        private bool _trimZero;
+        private bool _trim;
 
         public SimpleSceneModel(IGeometry geometry, string name, PrimitiveType primitives) : base(geometry, name, primitives)
         {
@@ -40,6 +42,8 @@ namespace SimpleCAD.Source.Environment
                 Matrix4.CreateRotationY(_rot.Y) *
                 Matrix4.CreateRotationX(_rot.X) *
                 Matrix4.CreateTranslation(_pos);
+
+            Geometry.OnTransformChanged(_transform);
         }
 
         public override void Translate(Vector3 translation, bool additive = false)
@@ -105,6 +109,33 @@ namespace SimpleCAD.Source.Environment
             if (ImGui.DragFloat3("Scale", ref tmp, 0.1f))
             {
                 Rescale(new Vector3(tmp.X, tmp.Y, tmp.Z));
+            }
+
+            if (_texture != null)
+            {
+                ImGui.Separator();
+                ImGui.Text("Intersection");
+                ImGui.Image((IntPtr)_texture.Handle, new(270, 270));
+
+
+                if (ImGui.Checkbox("Trim", ref _trim))
+                {
+                    ToggleTrimming(_trim);
+                }
+
+                if (ImGui.Button("Change trimming side"))
+                {
+                    if (_trimZero)
+                    {
+                        _trimZero = false;
+                        SetTrimTarget(255);
+                    }
+                    else
+                    {
+                        _trimZero = true;
+                        SetTrimTarget(0);
+                    }
+                }
             }
         }
 

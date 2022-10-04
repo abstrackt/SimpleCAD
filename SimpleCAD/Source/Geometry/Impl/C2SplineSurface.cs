@@ -1,16 +1,15 @@
 ﻿using ImGuiNET;
-using OpenTK;
 using OpenTK.Mathematics;
-using SharpSceneSerializer.DTOs.Enums;
 using SimpleCAD.Source.GUI;
 using SimpleCAD.Source.Utils;
 
 namespace SimpleCAD.Source.Geometry
 {
-    public class C2SplineSurface : Surface, ISceneGUIElement
+    public class C2SplineSurface : Surface, ISceneGUIElement, IParametricSurface
     {
         private bool _drawPolygon;
 
+        #region Draw data
         public override int PatchSize => 4;
         public override int PatchOffset => 1;
         public override (int u, int v) TesselationLevel => (_tessU, _tessV);
@@ -19,6 +18,14 @@ namespace SimpleCAD.Source.Geometry
         public override string FragShader => "splineSurface.frag";
         public override string TescShader => "splineSurface.tesc";
         public override string TeseShader => "splineSurface.tese";
+        #endregion
+
+        #region Parametric interface
+        public bool WrapU => Wrap;
+        public bool WrapV => false;
+        public float RangeU => patchesU + (Wrap ? 2 : 0);
+        public float RangeV => patchesV;
+        #endregion
 
         private int _tessU, _tessV;
 
@@ -113,6 +120,65 @@ namespace SimpleCAD.Source.Geometry
             ImGui.DragInt("Divisions (U)", ref _tessU, 0.1f, 1, 64);
             ImGui.SetNextItemWidth(100f);
             ImGui.DragInt("Divisions (V)", ref _tessV, 0.1f, 1, 64);
+        }
+
+        public Vector3 Sample(float u, float v)
+        {
+            if (WrapU)
+                u = (u + RangeU) % RangeU;
+
+            int patchU = (int)u;
+            int patchV = (int)v;
+
+            if (u != 0 && u == (int)u)
+                patchU--;
+            if (v != 0 && v == (int)v)
+                patchV--;
+
+            // Clamp u and v to 0-1 range;
+            while (u > 1)
+            {
+                u -= 1;
+            }
+            while (v > 1)
+            {
+                v -= 1;
+            }
+
+            var p = GetPatchPoints(patchU, patchV);
+
+            Vector3 u0 = MathUtils.DeBoor(u, new List<Vector3>() { p[0, 0], p[1, 0], p[2, 0], p[3, 0] });
+            Vector3 u1 = MathUtils.DeBoor(u, new List<Vector3>() { p[0, 1], p[1, 1], p[2, 1], p[3, 1] });
+            Vector3 u2 = MathUtils.DeBoor(u, new List<Vector3>() { p[0, 2], p[1, 2], p[2, 2], p[3, 2] });
+            Vector3 u3 = MathUtils.DeBoor(u, new List<Vector3>() { p[0, 3], p[1, 3], p[2, 3], p[3, 3] });
+
+            Vector3 v0 = MathUtils.DeBoor(v, new List<Vector3>() { u0, u1, u2, u3 });
+
+            return v0;
+        }
+
+        public Vector3 DerivU(float u, float v)
+        {
+            var h = 0.001f;
+
+            var p1 = Sample(u, v);
+            var p2 = Sample(u + h, v);
+
+            var d = (p2 - p1) / h;
+
+            return d;
+        }
+
+        public Vector3 DerivV(float u, float v)
+        {
+            var h = 0.001f;
+
+            var p1 = Sample(u, v);
+            var p2 = Sample(u, v + h);
+
+            var d = (p2 - p1) / h;
+
+            return d;
         }
     }
 }

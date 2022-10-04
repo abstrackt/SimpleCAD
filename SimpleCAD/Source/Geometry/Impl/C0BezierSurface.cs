@@ -23,8 +23,8 @@ namespace SimpleCAD.Source.Geometry
         #region Parametric interface
         public bool WrapU => Wrap;
         public bool WrapV => false;
-        public int RangeU => patchesU;
-        public int RangeV => patchesV;
+        public float RangeU => patchesU;
+        public float RangeV => patchesV;
         #endregion
 
         private int _tessU, _tessV;

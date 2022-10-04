@@ -15,10 +15,6 @@ namespace SimpleCAD.Source.Environment
         public GregoryPatchSceneModel(GregoryPatch geometry, string name) : base(geometry, name, PrimitiveType.Patches, true, false)
         {
             _patch = geometry;
-
-            SetVertShader(geometry.VertexShader);
-            SetFragShader(geometry.FragShader);
-            SetTesselationShader(geometry.TescShader, geometry.TeseShader);
         }
 
         private void SetTesselationLevels(int u, int v)

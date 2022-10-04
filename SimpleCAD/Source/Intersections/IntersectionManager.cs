@@ -7,6 +7,7 @@ namespace SimpleCAD.Source.Intersections
     {
         private const float SUBDIV_PRECISION = 0.001f;
         private const int SUBDIV_ITERATIONS = 6;
+        private const float NEWTON_PRECISION = 0.001f;
         private const int NEWTON_ITERATIONS = 10;
         public const int DEFAULT_TEXTURE_RES = 512;
 
@@ -208,8 +209,6 @@ namespace SimpleCAD.Source.Intersections
 
                 var p0 = s1.Sample(next.u1, next.v1);
 
-                Vector3 p1 = default, p2 = default;
-
                 for (int i = 0; i < NEWTON_ITERATIONS; i++)
                 {
                     var decr = Newton(next, step, p0, s1, s2);
@@ -225,11 +224,14 @@ namespace SimpleCAD.Source.Intersections
                         parameters.Add(clamped);
                         break;
                     }
+
+                    if ((s1.Sample(next.u1, next.v1) - s2.Sample(next.u2, next.v2)).Length < NEWTON_PRECISION)
+                        break;
                 }
 
                 var lastP = points[points.Count - 1];
 
-                if (OutsideRange(next, s1, s2) || (p1 - p2).Length > Math.Abs(step)) 
+                if (OutsideRange(next, s1, s2)) 
                 {
                     break;
                 }
@@ -256,7 +258,7 @@ namespace SimpleCAD.Source.Intersections
             };
         }
 
-        private void Bresenham(Vector2 from, Vector2 to, byte value, int texRes, ref byte[] t)
+        private void Bresenham(Vector2 from, Vector2 to, byte value, int texRes, ref byte[] t, bool wrapX = false, bool wrapY = false)
         {
             var x1 = (int)(from.X * texRes);
             var y1 = (int)(from.Y * texRes);
@@ -281,7 +283,20 @@ namespace SimpleCAD.Source.Intersections
             int n = max >> 1;
             for (int i = 0; i <= max; i++)
             {
-                var idx = (texRes * y1 + x1);
+                var finalX = x1;
+                var finalY = y1;
+                
+                if (wrapX)
+                {
+                    finalX = (x1 + texRes) % texRes;    
+                }
+
+                if (wrapY)
+                {
+                    finalY = (y1 + texRes) % texRes;
+                }
+
+                var idx = (texRes * finalY + finalX);
                 if (idx >= 0 && idx < t.Length)
                 {
                     t[idx] = value;
@@ -345,8 +360,8 @@ namespace SimpleCAD.Source.Intersections
                 var from2 = parameters[p - 1].SecondScaled(s2.RangeU, s2.RangeV);
                 var to1 = parameters[p].FirstScaled(s1.RangeU, s1.RangeV);
                 var to2 = parameters[p].SecondScaled(s2.RangeU, s2.RangeV);
-                Bresenham(from1, to1, 128, texRes, ref t1);
-                Bresenham(from2, to2, 128, texRes, ref t2);
+                Bresenham(from1, to1, 128, texRes, ref t1, s1.WrapU, s1.WrapV);
+                Bresenham(from2, to2, 128, texRes, ref t2, s2.WrapU, s2.WrapV);
             }
 
             FloodFill(Vector2.Zero, 0, 255, texRes, ref t1);

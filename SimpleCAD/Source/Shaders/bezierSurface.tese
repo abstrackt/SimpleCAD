@@ -5,10 +5,9 @@ uniform mat4 view;
 uniform mat4 projection;
 
 in vec4 tesc_colors[];
-flat in int tesc_primitives[];
+in vec2 tesc_uvs[];
 out vec4 tese_color;
-out vec2 tese_tex;
-flat out int tese_primitive;
+out vec2 tese_uv;
 
 void main() {
 	vec4 p00 = gl_in[ 0 ].gl_Position;
@@ -28,6 +27,23 @@ void main() {
 	vec4 p23 = gl_in[ 14 ].gl_Position;
 	vec4 p33 = gl_in[ 15 ].gl_Position;
 
+	vec2 uv00 = tesc_uvs[0];
+	vec2 uv10 = tesc_uvs[1];
+	vec2 uv20 = tesc_uvs[2];
+	vec2 uv30 = tesc_uvs[3];
+	vec2 uv01 = tesc_uvs[4];
+	vec2 uv11 = tesc_uvs[5];
+	vec2 uv21 = tesc_uvs[6];
+	vec2 uv31 = tesc_uvs[7];
+	vec2 uv02 = tesc_uvs[8];
+	vec2 uv12 = tesc_uvs[9];
+	vec2 uv22 = tesc_uvs[10];
+	vec2 uv32 = tesc_uvs[11];
+	vec2 uv03 = tesc_uvs[12];
+	vec2 uv13 = tesc_uvs[13];
+	vec2 uv23 = tesc_uvs[14];
+	vec2 uv33 = tesc_uvs[15];
+
 	float u = gl_TessCoord.x;
 	float v = gl_TessCoord.y;
 
@@ -46,9 +62,13 @@ void main() {
 	+ bv2 * ( bu0*p20 + bu1*p21 + bu2*p22 + bu3*p23 )
 	+ bv3 * ( bu0*p30 + bu1*p31 + bu2*p32 + bu3*p33 );
 
+	vec2 uv = bv0 * ( bu0*uv00 + bu1*uv01 + bu2*uv02 + bu3*uv03 ) 
+	+ bv1 * ( bu0*uv10 + bu1*uv11 + bu2*uv12 + bu3*uv13 )
+	+ bv2 * ( bu0*uv20 + bu1*uv21 + bu2*uv22 + bu3*uv23 )
+	+ bv3 * ( bu0*uv30 + bu1*uv31 + bu2*uv32 + bu3*uv33 );
+
 	gl_Position = p * view * projection;
 	
 	tese_color = tesc_colors[0];
-	tese_tex = vec2(u, v);
-	tese_primitive = tesc_primitives[0];
+	tese_uv = uv;
 }

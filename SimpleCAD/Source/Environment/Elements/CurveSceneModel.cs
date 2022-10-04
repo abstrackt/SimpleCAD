@@ -16,12 +16,8 @@ namespace SimpleCAD.Source.Environment
 
         public CurveSceneModel(AdaptiveCurve geometry, string name) : base(geometry, name, PrimitiveType.Patches)
         {
-            _lines = new LineRenderer(new LineSet());
             _curve = geometry;
-
-            SetVertShader("bezierCurve.vert");
-            SetFragShader("bezierCurve.frag");
-            SetTesselationShader("bezierCurve.tesc", "bezierCurve.tese");
+            _lines = new LineRenderer(new LineSet());
         }
 
         protected override void BeforeRendering()

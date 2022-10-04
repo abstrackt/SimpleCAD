@@ -140,9 +140,11 @@ namespace SimpleCAD.Source.Environment
 
             GL.VertexAttribPointer(0, 4, VertexAttribPointerType.Float, false, Vertex.Size, 0); // position
             GL.VertexAttribPointer(1, 4, VertexAttribPointerType.Float, false, Vertex.Size, 16); // color
+            GL.VertexAttribPointer(2, 2, VertexAttribPointerType.Float, false, Vertex.Size, 32); // uv
 
             GL.EnableVertexAttribArray(0);
             GL.EnableVertexAttribArray(1);
+            GL.EnableVertexAttribArray(2);
         }
 
         protected virtual void BeforeRendering() { }

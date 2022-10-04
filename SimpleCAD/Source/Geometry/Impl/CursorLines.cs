@@ -8,6 +8,10 @@ namespace SimpleCAD.Source.Geometry
 {
     public class CursorLines : IGeometry
     {
+        public string VertexShader => "shader.vert";
+        public string FragShader => "shader.frag";
+        public string TescShader => "";
+        public string TeseShader => "";
 
         public (Vertex[] vertices, uint[] indices) GetMesh()
         {
@@ -31,6 +35,11 @@ namespace SimpleCAD.Source.Geometry
         public bool GeometryChanged()
         {
             return false;
+        }
+
+        public void OnTransformChanged(Matrix4 transform)
+        {
+            // Not required
         }
     }
 }

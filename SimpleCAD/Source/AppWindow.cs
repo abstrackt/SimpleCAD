@@ -571,6 +571,17 @@ namespace SimpleCAD.Source
                 ImGui.SetWindowSize(new System.Numerics.Vector2(300, 5 * Size.Y / 9 - 18));
                 ImGui.SetWindowPos(new System.Numerics.Vector2(Size.X - 300, 18 + 4 * Size.Y / 9));
 
+                var parametricSurfaces = SelectionManager.Instance.SelectedParametricSurfaces;
+
+                if (parametricSurfaces.Count == 2)
+                {
+                    if (ImGui.Button("Find intersection"))
+                    {
+                        Scene.Instance.SetupIntersection(parametricSurfaces[0], parametricSurfaces[1]);
+                    }
+                    ImGui.Separator();
+                }
+
                 if (selection.TryGetSingleSelected(out var model))
                 { 
                     model.DrawElementGUI();

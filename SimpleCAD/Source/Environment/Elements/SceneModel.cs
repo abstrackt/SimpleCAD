@@ -34,6 +34,11 @@ namespace SimpleCAD.Source.Environment
 
             type = primitives;
 
+            SetVertShader(geometry.VertexShader);
+            SetFragShader(geometry.FragShader);
+            if (geometry.TescShader != String.Empty && geometry.TeseShader != String.Empty)  
+                SetTesselationShader(geometry.TescShader, geometry.TeseShader);
+
             TryUpdateMeshColor();
 
             Encoding.ASCII.GetBytes(name).CopyTo(this.name, 0);

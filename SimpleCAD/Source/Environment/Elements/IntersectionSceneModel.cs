@@ -37,10 +37,6 @@ namespace SimpleCAD.Source.Environment
             _data = data;
             _curve = curve;
             _curve.SetControlPoints(data.points);
-
-            SetVertShader("bezierCurve.vert");
-            SetFragShader("bezierCurve.frag");
-            SetTesselationShader("bezierCurve.tesc", "bezierCurve.tese");
         }
 
         // We cannot translate intersections

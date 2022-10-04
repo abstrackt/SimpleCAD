@@ -275,5 +275,10 @@ namespace SimpleCAD.Source.Geometry.Impl
                 _color = color;
             }
         }
+
+        public void OnTransformChanged(Matrix4 transform)
+        {
+            // Not required
+        }
     }
 }

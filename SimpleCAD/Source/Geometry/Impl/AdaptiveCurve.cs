@@ -16,6 +16,14 @@ namespace SimpleCAD.Source.Geometry
         public abstract int SegmentSize { get; }
         public abstract int SegmentOffset { get; }
 
+        public string VertexShader => "bezierCurve.vert";
+
+        public string FragShader => "bezierCurve.frag";
+
+        public string TescShader => "bezierCurve.tesc";
+
+        public string TeseShader => "bezierCurve.tese";
+
         public bool GeometryChanged() => true;
 
         public AdaptiveCurve()
@@ -152,6 +160,11 @@ namespace SimpleCAD.Source.Geometry
             {
                 this.color = color;
             }
+        }
+
+        public void OnTransformChanged(Matrix4 transform)
+        {
+            // Not required
         }
     }
 }

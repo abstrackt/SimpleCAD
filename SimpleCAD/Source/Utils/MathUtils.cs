@@ -106,5 +106,40 @@ namespace SimpleCAD.Source.Utils
             int lastElmnt = bezierPoints.Count - 1;
             return bezierPoints[lastElmnt];
         }
+
+        public static Vector3 DeBoor(float t, List<Vector3> points)
+        {
+            if (points.Count != 4)
+            {
+                return Vector3.Zero;
+            }
+
+            var p10 = points[0];
+            var p20 = points[1];
+            var p30 = points[2];
+            var p40 = points[3];
+
+            t += 2;
+
+            float a21 = t / 3;
+            float a31 = (t - 1) / 3;
+            float a41 = (t - 2) / 3;
+
+            float a32 = (t - 1) / 2;
+            float a42 = (t - 2) / 2;
+
+            float a43 = (t - 2) / 1;
+
+            Vector3 p41 = a41 * p40 + (1 - a41) * p30;
+            Vector3 p31 = a31 * p30 + (1 - a31) * p20;
+            Vector3 p21 = a21 * p20 + (1 - a21) * p10;
+
+            Vector3 p42 = a42 * p41 + (1 - a42) * p31;
+            Vector3 p32 = a32 * p31 + (1 - a32) * p21;
+
+            Vector3 p43 = a43 * p42 + (1 - a43) * p32;
+
+            return p43;
+        }
     }
 }

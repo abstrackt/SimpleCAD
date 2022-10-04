@@ -169,6 +169,8 @@ namespace SimpleCAD.Source.Utils
 
         public void SetSampler(string name, int unit)
         {
+            if (!_uniformLocations.ContainsKey(name))
+                return;
             GL.UseProgram(handle);
             GL.Uniform1(_uniformLocations[name], unit);
         }

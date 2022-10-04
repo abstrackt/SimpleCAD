@@ -53,12 +53,6 @@ namespace SimpleCAD.Source.Geometry
 
         protected Vector3[,] GetPatchPoints(int uPatch, int vPatch)
         {
-            if (Wrap)
-                uPatch = (uPatch + PatchesU) % PatchesU;
-
-            if (uPatch >= PatchesU || vPatch >= PatchesV || uPatch < 0 || vPatch < 0)
-                throw new InvalidOperationException("Trying to obtain patch outside of permitted range");
-
             var points = new Vector3[PatchSize, PatchSize];
 
             int startU = uPatch * PatchOffset;
@@ -104,13 +98,31 @@ namespace SimpleCAD.Source.Geometry
             {
                 while (currentV + PatchSize <= PointsV)
                 {
+                    float currU = 0, currV = 0;
                     for (int u = currentU; u < currentU + PatchSize; u++)
                     {
                         for (int v = currentV; v < currentV + PatchSize; v++)
                         {
+                            currU = u - currentU;
+                            currV = v - currentV;
+
                             var uWrap = u % PointsU;
                             var vWrap = v % PointsV;
-                            vertexCache.Add(new Vertex(points[uWrap, vWrap], color));
+
+                            var uv = Vector2.Zero;
+
+                            if (this is IParametricSurface)
+                            {
+                                var parametric = (IParametricSurface)this;
+                                var uTex = currentU + currU / (PatchSize - 1);
+                                var vTex = currentV + currV / (PatchSize - 1);
+                                uTex /= parametric.RangeU;
+                                vTex /= parametric.RangeV;
+                                uv = new Vector2(uTex, vTex);
+                            }
+                            
+
+                            vertexCache.Add(new Vertex(points[uWrap, vWrap], color, uv));
                         }
                     }
 
@@ -152,6 +164,11 @@ namespace SimpleCAD.Source.Geometry
         public List<Vector3> MoveVirtualPoint(int i, Vector3 position)
         {
             return new List<Vector3>();
+        }
+
+        public void OnTransformChanged(Matrix4 transform)
+        {
+            // Not required
         }
     }
 }

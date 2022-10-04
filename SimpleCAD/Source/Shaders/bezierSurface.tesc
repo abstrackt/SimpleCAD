@@ -5,8 +5,9 @@ uniform int tess_u;
 uniform int tess_v;
 
 in vec4 vs_color[];
+in vec2 vs_uv[];
 out vec4 tesc_colors[];
-flat out int tesc_primitives[];
+out vec2 tesc_uvs[];
 
 void main() {
 	gl_out[gl_InvocationID].gl_Position = gl_in[gl_InvocationID].gl_Position;
@@ -19,5 +20,5 @@ void main() {
 	gl_TessLevelInner[1] = tess_v;
 
 	tesc_colors[gl_InvocationID] = vs_color[gl_InvocationID];
-	tesc_primitives[gl_InvocationID] = gl_PrimitiveID;
+	tesc_uvs[gl_InvocationID] = vs_uv[gl_InvocationID];
 }

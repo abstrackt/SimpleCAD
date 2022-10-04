@@ -10,6 +10,11 @@ namespace SimpleCAD.Source.Geometry
 {
     public class Point : IGeometry, IColorable
     {
+        public string VertexShader => "shader.vert";
+        public string FragShader => "shader.frag";
+        public string TescShader => "";
+        public string TeseShader => "";
+
         public Color4 color;
 
         public Point(Color4 color)
@@ -38,6 +43,11 @@ namespace SimpleCAD.Source.Geometry
         public void SetColor(Color4 color)
         {
             this.color = color;
+        }
+
+        public void OnTransformChanged(Matrix4 transform)
+        {
+            // Not required
         }
     }
 }

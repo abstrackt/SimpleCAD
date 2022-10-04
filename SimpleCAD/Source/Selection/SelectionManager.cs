@@ -46,9 +46,19 @@ namespace SimpleCAD.Source.Utils
             .Cast<SurfaceSceneModel>()
             .ToList();
 
-        public List<ComplexSceneModel> SelectedParametricSurfaces => _selectedComplexModels
-            .Where(x => x.HasParametricGeometry)
-            .ToList();
+        public List<SceneModel> SelectedParametricSurfaces
+        {
+            get
+            {
+                List<SceneModel> complex = _selectedComplexModels.Where(x => x.HasParametricGeometry).Cast<SceneModel>().ToList();
+                List<SceneModel> simple = _selectedSimpleModels.Where(x => x.HasParametricGeometry).ToList();
+
+                complex.AddRange(simple);
+
+                return complex;
+            }
+        }
+        
 
         public bool ComplexModelSelected => _selectedComplexModels.Count == 1;
         public int SimpleCount => _selectedSimpleModels.Count;
@@ -252,16 +262,6 @@ namespace SimpleCAD.Source.Utils
                         bezierSurfaces[0], 
                         bezierSurfaces[1], 
                         bezierSurfaces[2]);
-                }
-            }
-
-            var parametricSurfaces = SelectedParametricSurfaces;
-
-            if (parametricSurfaces.Count == 2)
-            {
-                if (ImGui.Button("Find intersection"))
-                {
-                    Scene.Instance.SetupIntersection(parametricSurfaces[0], parametricSurfaces[1]);
                 }
             }
 

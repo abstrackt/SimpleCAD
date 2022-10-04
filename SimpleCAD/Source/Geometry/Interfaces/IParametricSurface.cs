@@ -6,8 +6,8 @@ namespace SimpleCAD.Source.Geometry
     {
         public bool WrapU { get; }
         public bool WrapV { get; }
-        public int RangeU { get; }
-        public int RangeV { get; }
+        public float RangeU { get; }
+        public float RangeV { get; }
 
         public Vector3 Sample(float u, float v);
         public Vector3 DerivU(float u, float v);

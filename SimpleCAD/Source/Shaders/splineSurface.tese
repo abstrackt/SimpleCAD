@@ -5,7 +5,9 @@ uniform mat4 view;
 uniform mat4 projection;
 
 in vec4 tesc_colors[];
+in vec2 tesc_uvs[];
 out vec4 tese_color;
+out vec2 tese_uv;
 
 vec4 deboor(float t, vec4 p10, vec4 p20, vec4 p30, vec4 p40) {
 	t += 2;
@@ -49,6 +51,23 @@ void main() {
 	vec4 p23 = gl_in[ 14 ].gl_Position;
 	vec4 p33 = gl_in[ 15 ].gl_Position;
 
+	vec2 uv00 = tesc_uvs[0];
+	vec2 uv10 = tesc_uvs[1];
+	vec2 uv20 = tesc_uvs[2];
+	vec2 uv30 = tesc_uvs[3];
+	vec2 uv01 = tesc_uvs[4];
+	vec2 uv11 = tesc_uvs[5];
+	vec2 uv21 = tesc_uvs[6];
+	vec2 uv31 = tesc_uvs[7];
+	vec2 uv02 = tesc_uvs[8];
+	vec2 uv12 = tesc_uvs[9];
+	vec2 uv22 = tesc_uvs[10];
+	vec2 uv32 = tesc_uvs[11];
+	vec2 uv03 = tesc_uvs[12];
+	vec2 uv13 = tesc_uvs[13];
+	vec2 uv23 = tesc_uvs[14];
+	vec2 uv33 = tesc_uvs[15];
+
 	float u = gl_TessCoord.x;
 	float v = gl_TessCoord.y;
 
@@ -59,7 +78,23 @@ void main() {
 
 	vec4 p = deboor(u, p0, p1, p2, p3);
 
+	float bu0 = (1.-u) * (1.-u) * (1.-u);
+	float bu1 = 3. * u * (1.-u) * (1.-u);
+	float bu2 = 3. * u * u * (1.-u);
+	float bu3 = u * u * u;
+
+	float bv0 = (1.-v) * (1.-v) * (1.-v);
+	float bv1 = 3. * v * (1.-v) * (1.-v);
+	float bv2 = 3. * v * v * (1.-v);
+	float bv3 = v * v * v;
+
+	vec2 uv = bu0 * ( bv0*uv00 + bv1*uv01 + bv2*uv02 + bv3*uv03 ) 
+	+ bu1 * ( bv0*uv10 + bv1*uv11 + bv2*uv12 + bv3*uv13 )
+	+ bu2 * ( bv0*uv20 + bv1*uv21 + bv2*uv22 + bv3*uv23 )
+	+ bu3 * ( bv0*uv30 + bv1*uv31 + bv2*uv32 + bv3*uv33 );
+
 	gl_Position = p * view * projection;
 
 	tese_color = tesc_colors[0];
+	tese_uv = uv;
 }

@@ -1,6 +1,6 @@
 ﻿#version 400
-in vec4 tese_color;
-in vec2 tese_uv;
+in vec4 vs_color;
+in vec2 vs_uv;
 out vec4 color;
 
 uniform sampler2D mask;
@@ -11,11 +11,11 @@ void main()
 {
 	if (trim != 0) 
 	{
-		float sampled = texture(mask, tese_uv).r * 255.0;
+		float sampled = texture(mask, vs_uv).r * 255.0;
 
 		if (sampled == target)
 			discard;
 	}
 
-	color = tese_color;
+	color = vs_color;
 }

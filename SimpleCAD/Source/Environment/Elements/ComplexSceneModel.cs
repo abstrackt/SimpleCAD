@@ -263,8 +263,7 @@ namespace SimpleCAD.Source.Environment
                         SetTrimTarget(0);
                     }
                 }
-            }
-                
+            }    
         }
 
         public abstract bool TrySerialize(out IGeometryObject serialized);
