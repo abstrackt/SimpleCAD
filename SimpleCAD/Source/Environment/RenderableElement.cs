@@ -67,6 +67,11 @@ namespace SimpleCAD.Source.Environment
             ReloadShader();
         }
 
+        public void ClearTexture()
+        {
+            _texture = null;
+        }
+
         public void SetIntersectTexture(byte[] pixels, int texRes)
         {
             _texture = Texture.Load(pixels, PixelFormat.Red, texRes);

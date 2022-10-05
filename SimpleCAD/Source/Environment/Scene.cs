@@ -260,25 +260,38 @@ namespace SimpleCAD.Source.Environment
             }
         }
 
-        public void SetupIntersection(SceneModel m1,SceneModel m2)
+        public void SetupIntersection(SceneModel m1,SceneModel m2, bool useCursor)
         {
             var intersections = IntersectionManager.Instance;
 
-            var result = intersections.FindIntersection(m1.ParametricGeometry, m2.ParametricGeometry);
-            var model = new IntersectionSceneModel(new C2InterpolatingCurve(), "Intersection", result, m1, m2);
+            IntersectionData result;
+            bool found;
 
-            var textures = intersections.GetIntersectTexture(m1.ParametricGeometry, m2.ParametricGeometry, result.parameters);
+            if (useCursor) {
+                found = intersections.TryFindIntersection(m1.ParametricGeometry, m2.ParametricGeometry, cursorPos, out result);
+            }
+            else
+            {
+                found = intersections.TryFindIntersection(m1.ParametricGeometry, m2.ParametricGeometry, out result);
+            }
 
-            m1.SetIntersectTexture(textures.t1, IntersectionManager.DEFAULT_TEXTURE_RES);
-            m2.SetIntersectTexture(textures.t2, IntersectionManager.DEFAULT_TEXTURE_RES);
+            if (found)
+            {
+                var model = new IntersectionSceneModel(new C2InterpolatingCurve(), "Intersection", result, m1, m2);
 
-            m1.ToggleTrimming(false);
-            m2.ToggleTrimming(false);
+                var textures = intersections.GetIntersectTexture(m1.ParametricGeometry, m2.ParametricGeometry, result.parameters);
 
-            m1.SetTrimTarget(255);
-            m2.SetTrimTarget(255);
+                m1.SetIntersectTexture(textures.t1, IntersectionManager.DEFAULT_TEXTURE_RES);
+                m2.SetIntersectTexture(textures.t2, IntersectionManager.DEFAULT_TEXTURE_RES);
 
-            AddModel(model);
+                m1.ToggleTrimming(false);
+                m2.ToggleTrimming(false);
+
+                m1.SetTrimTarget(255);
+                m2.SetTrimTarget(255);
+
+                AddModel(model);
+            }
         }
 
         public void AddModel(GregoryPatchSceneModel model)
@@ -413,6 +426,10 @@ namespace SimpleCAD.Source.Environment
         {
             if (intersections.Contains(model))
             {
+                model.M1.ClearTexture();
+                model.M2.ClearTexture();
+                model.M1.ToggleTrimming(false);
+                model.M2.ToggleTrimming(false);
                 SelectionManager.Instance.Remove(model);
                 intersections.Remove(model);
                 _modelDict.Remove(model.id);

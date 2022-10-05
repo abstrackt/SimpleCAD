@@ -34,6 +34,7 @@ namespace SimpleCAD.Source
             _uiState = new GUIState()
             {
                 settingsEnabled = false,
+                useCursorStartPoint = false,
                 fov = 60,
                 nearZ = 0.5f,
                 farZ = 100,
@@ -575,9 +576,10 @@ namespace SimpleCAD.Source
 
                 if (parametricSurfaces.Count == 2)
                 {
+                    ImGui.Checkbox("Near cursor", ref _uiState.useCursorStartPoint);
                     if (ImGui.Button("Find intersection"))
                     {
-                        Scene.Instance.SetupIntersection(parametricSurfaces[0], parametricSurfaces[1]);
+                        Scene.Instance.SetupIntersection(parametricSurfaces[0], parametricSurfaces[1], _uiState.useCursorStartPoint);
                     }
                     ImGui.Separator();
                 }
@@ -897,6 +899,7 @@ namespace SimpleCAD.Source
 
         private struct GUIState
         {
+            public bool useCursorStartPoint;
             public bool settingsEnabled;
             public bool createMenuVisible;
             public float fov;

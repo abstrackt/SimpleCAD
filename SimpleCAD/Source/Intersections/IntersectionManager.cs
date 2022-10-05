@@ -5,9 +5,12 @@ namespace SimpleCAD.Source.Intersections
 {
     public class IntersectionManager
     {
-        private const float SUBDIV_PRECISION = 0.001f;
-        private const int SUBDIV_ITERATIONS = 6;
+        private const float START_PRECISION = 0.0075f;
         private const float NEWTON_PRECISION = 0.001f;
+        private const float GRADIENT_STEP = 0.02f;
+        private const int SUBDIV_ITERATIONS = 6;
+        private const int CURSOR_ITERATIONS = 20;
+        private const int GRADIENT_ITERATIONS = 100;
         private const int NEWTON_ITERATIONS = 10;
         public const int DEFAULT_TEXTURE_RES = 512;
 
@@ -24,10 +27,36 @@ namespace SimpleCAD.Source.Intersections
             }
         }
 
-        public IntersectionData FindIntersection(IParametricSurface s1, IParametricSurface s2)
+        public bool TryFindIntersection(IParametricSurface s1, IParametricSurface s2, out IntersectionData result)
         {
-            var sol = FindStartingPoint(s1, s2);
+            if (TryFindStartSubdiv(s1, s2, out var sol))
+            {
+                result = FindIntersection(sol, s1, s2);
+                return true;
+            }
+            else
+            {
+                result = default;
+                return false;
+            }
+        }
 
+        public bool TryFindIntersection(IParametricSurface s1, IParametricSurface s2, Vector3 cursor, out IntersectionData result)
+        {
+            if (TryFindStart(cursor, s1, s2, out var sol))
+            {
+                result = FindIntersection(sol, s1, s2);
+                return true;
+            }
+            else
+            {
+                result = default;
+                return false;
+            }
+        }
+
+        private IntersectionData FindIntersection(Solution sol, IParametricSurface s1, IParametricSurface s2)
+        {
             var side1 = FindIntersectionPoints(sol, 0.02f, s1, s2, out var cycle);
 
             if (!cycle)
@@ -48,15 +77,9 @@ namespace SimpleCAD.Source.Intersections
             return side1;
         }
 
-        private Solution FindStartingPoint(IParametricSurface s1, IParametricSurface s2)
+        private bool TryFindStartSubdiv(IParametricSurface s1, IParametricSurface s2, out Solution solution)
         {
-            Solution min = new Solution()
-            {
-                u1 = 0,
-                v1 = 0,
-                u2 = 0,
-                v2 = 0
-            };
+            Solution min = new Solution(0, 0, 0, 0);
 
             var it = 0;
             var minDist = float.MaxValue;
@@ -68,7 +91,7 @@ namespace SimpleCAD.Source.Intersections
             float incrU2 = s2.RangeU;
             float incrV2 = s2.RangeV;
 
-            while (it < SUBDIV_ITERATIONS && minDist > SUBDIV_PRECISION)
+            while (it < SUBDIV_ITERATIONS && minDist > START_PRECISION)
             {
                 var currMin = bestMin;
 
@@ -97,13 +120,12 @@ namespace SimpleCAD.Source.Intersections
                                 var minV2 = currMin.v2 + v2 * incrV2;
                                 var maxV2 = minV2 + incrV2;
 
-                                var sol = new Solution()
-                                {
-                                    u1 = (minU1 + maxU1) / 2,
-                                    v1 = (minV1 + maxV1) / 2,
-                                    u2 = (minU2 + maxU2) / 2,
-                                    v2 = (minV2 + maxV2) / 2
-                                };
+                                var sol = new Solution(
+                                    (minU1 + maxU1) / 2, 
+                                    (minV1 + maxV1) / 2, 
+                                    (minU2 + maxU2) / 2, 
+                                    (minV2 + maxV2) / 2
+                                    );
 
                                 var p1 = s1.Sample(sol.u1, sol.v1);
                                 var p2 = s2.Sample(sol.u2, sol.v2);
@@ -113,13 +135,7 @@ namespace SimpleCAD.Source.Intersections
                                 if (dist < minDist)
                                 {
                                     minDist = dist;
-                                    bestMin = new Solution()
-                                    {
-                                        u1 = minU1,
-                                        v1 = minV1,
-                                        u2 = minU2,
-                                        v2 = minV2
-                                    };
+                                    bestMin = new Solution(minU1, minV1, minU2, minV2);
                                     bestSol = sol;
                                 }
                             }
@@ -129,7 +145,97 @@ namespace SimpleCAD.Source.Intersections
                 it++;
             }
 
+            solution = bestSol;
+            return minDist <= START_PRECISION;
+        }
+
+        private bool TryFindStart(Vector3 cursor, IParametricSurface s1, IParametricSurface s2, out Solution solution)
+        {
+            var start = FindClosest(cursor, s1, s2);
+
+            var it = 0;
+            var step = GRADIENT_STEP;
+            var lastDist = float.MaxValue;
+            var currentDist = float.MaxValue;
+            var current = start;
+           
+            while (it < GRADIENT_ITERATIONS && currentDist > START_PRECISION)
+            {
+                var S1 = s1.Sample(current.u1, current.v1);
+                var S2 = s2.Sample(current.u2, current.v2);
+
+                currentDist = (S1 - S2).Length;
+
+                if (currentDist > lastDist)
+                {
+                    step /= 2;
+                }
+
+                var grad = GradientAtPoint(current, s1, s2);
+                current -= grad * step;
+
+                lastDist = currentDist;
+                it++;
+            }
+
+            solution = current;
+            return lastDist <= START_PRECISION;
+        }
+
+        private Solution FindClosest(Vector3 pos, IParametricSurface s1, IParametricSurface s2)
+        {
+            var bestTotalDist = float.MaxValue;
+            var bestSol = new Solution(0, 0, 0, 0);
+
+            for (int u1 = 0; u1 < CURSOR_ITERATIONS; u1++)
+            {
+                for (int u2 = 0; u2 < CURSOR_ITERATIONS; u2++)
+                {
+                    for (int v1 = 0; v1 < CURSOR_ITERATIONS; v1++)
+                    {
+                        for (int v2 = 0; v2 < CURSOR_ITERATIONS; v2++)
+                        {
+                            var u1s = u1 / (float)CURSOR_ITERATIONS;
+                            var v1s = v1 / (float)CURSOR_ITERATIONS;
+                            var u2s = u2 / (float)CURSOR_ITERATIONS;
+                            var v2s = v2 / (float)CURSOR_ITERATIONS;
+                            var S1 = s1.Sample(u1s, v1s);
+                            var S2 = s2.Sample(u2s, v2s);
+
+                            var d1 = (pos - S1).Length;
+                            var d2 = (pos - S2).Length;
+
+                            var total = d1 + d2;
+
+                            if (total < bestTotalDist)
+                            {
+                                bestTotalDist = total;
+                                bestSol = new Solution(u1s, v1s, u2s, v2s);
+                            }
+                        }
+                    }
+                }
+            }
+
             return bestSol;
+        }
+
+        private Solution GradientAtPoint(Solution p, IParametricSurface s1, IParametricSurface s2)
+        {
+            var S1 = s1.Sample(p.u1, p.v1);
+            var S2 = s2.Sample(p.u2, p.v2);
+
+            var duS1 = s1.DerivU(p.u1, p.v1);
+            var dvS1 = s1.DerivV(p.u1, p.v1);
+            var duS2 = s2.DerivU(p.u2, p.v2);
+            var dvS2 = s2.DerivV(p.u2, p.v2);
+
+            return new Solution(
+                (2 * S1.X * duS1.X - 2 * duS1.X * S2.X) + (2 * S1.Y * duS1.Y - 2 * duS1.Y * S2.Y) + (2 * S1.Z * duS1.Z - 2 * duS1.Z * S2.Z),
+                (2 * S1.X * dvS1.X - 2 * dvS1.X * S2.X) + (2 * S1.Y * dvS1.Y - 2 * dvS1.Y * S2.Y) + (2 * S1.Z * dvS1.Z - 2 * dvS1.Z * S2.Z),
+                (2 * S2.X * duS2.X - 2 * duS2.X * S1.X) + (2 * S2.Y * duS2.Y - 2 * duS2.Y * S1.Y) + (2 * S2.Z * duS2.Z - 2 * duS2.Z * S1.Z),
+                (2 * S2.X * dvS2.X - 2 * dvS2.X * S1.X) + (2 * S2.Y * dvS2.Y - 2 * dvS2.Y * S1.Y) + (2 * S2.Z * dvS2.Z - 2 * dvS2.Z * S1.Z)
+            );
         }
 
         private Vector3 Tangent(Solution p, IParametricSurface s1, IParametricSurface s2)
@@ -166,13 +272,7 @@ namespace SimpleCAD.Source.Intersections
 
             var v = f * m;
 
-            return new Solution()
-            {
-                u1 = v.X,
-                v1 = v.Y,
-                u2 = v.Z,
-                v2 = v.W
-            };
+            return new Solution(v.X, v.Y, v.Z, v.W);
         }
 
         private bool OutsideRange(Solution s, IParametricSurface s1, IParametricSurface s2)
@@ -212,6 +312,19 @@ namespace SimpleCAD.Source.Intersections
                 for (int i = 0; i < NEWTON_ITERATIONS; i++)
                 {
                     var decr = Newton(next, step, p0, s1, s2);
+
+                    if (float.IsNaN(next.u1) || 
+                        float.IsNaN(next.u2) || 
+                        float.IsNaN(next.v1) || 
+                        float.IsNaN(next.v2))
+                    {
+                        // Numerical failure occured
+                        return new IntersectionData()
+                        {
+                            points = points,
+                            parameters = parameters
+                        };
+                    }
 
                     next -= decr;
 

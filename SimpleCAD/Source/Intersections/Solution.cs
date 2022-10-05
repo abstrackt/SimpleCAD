@@ -7,6 +7,14 @@ namespace SimpleCAD.Source.Intersections
     {
         public float u1, v1, u2, v2;
 
+        public Solution(float u1, float v1, float u2, float v2)
+        {
+            this.u1 = u1;
+            this.v1 = v1;
+            this.u2 = u2;
+            this.v2 = v2;
+        }
+
         public void Wrap(IParametricSurface s1, IParametricSurface s2)
         {
             if ((u1 < 0 || u1 > s1.RangeU) && !s1.WrapU)
@@ -40,37 +48,29 @@ namespace SimpleCAD.Source.Intersections
             return new Vector2(u2 / scaleU, v2 / scaleV);
         }
 
-        public static Solution operator -(Solution a, Solution b) => new Solution()
-        {
-            u1 = a.u1 - b.u1,
-            u2 = a.u2 - b.u2,
-            v1 = a.v1 - b.v1,
-            v2 = a.v2 - b.v2
-        };
+        public static Solution operator -(Solution a, Solution b) => new Solution(
+            a.u1 - b.u1, 
+            a.v1 - b.v1, 
+            a.u2 - b.u2, 
+            a.v2 - b.v2);
 
-        public static Solution operator +(Solution a, Solution b) => new Solution()
-        {
-            u1 = a.u1 + b.u1,
-            u2 = a.u2 + b.u2,
-            v1 = a.v1 + b.v1,
-            v2 = a.v2 + b.v2
-        };
+        public static Solution operator +(Solution a, Solution b) => new Solution(
+            a.u1 + b.u1,
+            a.v1 + b.v1,
+            a.u2 + b.u2,
+            a.v2 + b.v2);
 
-        public static Solution operator *(Solution a, float b) => new Solution()
-        {
-            u1 = a.u1 * b,
-            u2 = a.u2 * b,
-            v1 = a.v1 * b,
-            v2 = a.v2 * b
-        };
+        public static Solution operator *(Solution a, float b) => new Solution(
+            a.u1 * b,
+            a.v1 * b,
+            a.u2 * b,
+            a.v2 * b);
 
-        public static Solution operator /(Solution a, float b) => new Solution()
-        {
-            u1 = a.u1 / b,
-            u2 = a.u2 / b,
-            v1 = a.v1 / b,
-            v2 = a.v2 / b
-        };
+        public static Solution operator /(Solution a, float b) => new Solution(
+            a.u1 / b,
+            a.v1 / b,
+            a.u2 / b,
+            a.v2 / b);
 
         public void Clamp(IParametricSurface s1, IParametricSurface s2)
         {
