@@ -238,27 +238,22 @@ namespace SimpleCAD.Source.Intersections
             );
         }
 
-        private Vector3 Tangent(Solution p, IParametricSurface s1, IParametricSurface s2)
+        private Solution NewtonStep(Solution p, float step, Vector3 p0, IParametricSurface s1, IParametricSurface s2)
         {
-            var n1 = Vector3.Cross(s1.DerivU(p.u1, p.v1), s1.DerivV(p.u1, p.v1)).Normalized();
-            var n2 = Vector3.Cross(s2.DerivU(p.u2, p.v2), s2.DerivV(p.u2, p.v2)).Normalized();
+            Vector4 F(Vector3 p0, Vector3 p1, Vector3 p2, Vector3 t, float step)
+            {
+                return new Vector4((p1 - p2), Vector3.Dot(p1 - p0, t) - step);
+            }
 
-            return Vector3.Cross(n1, n2).Normalized();
-        }
-
-        private Vector4 F(Vector3 p0, Vector3 p1, Vector3 p2, Vector3 t, float step)
-        {
-            return new Vector4((p1 - p2), Vector3.Dot(p1 - p0, t) - step);
-        }
-
-        private Solution Newton(Solution p, float step, Vector3 p0, IParametricSurface s1, IParametricSurface s2)
-        {
             var h = 0.001f;
 
             var p1 = s1.Sample(p.u1, p.v1);
             var p2 = s2.Sample(p.u2, p.v2);
 
-            var t = Tangent(p, s1, s2);
+            var n1 = Vector3.Cross(s1.DerivU(p.u1, p.v1), s1.DerivV(p.u1, p.v1)).Normalized();
+            var n2 = Vector3.Cross(s2.DerivU(p.u2, p.v2), s2.DerivV(p.u2, p.v2)).Normalized();
+
+            var t = Vector3.Cross(n1, n2).Normalized();
 
             var f = F(p0, p1, p2, t, step);
 
@@ -311,7 +306,7 @@ namespace SimpleCAD.Source.Intersections
 
                 for (int i = 0; i < NEWTON_ITERATIONS; i++)
                 {
-                    var decr = Newton(next, step, p0, s1, s2);
+                    var decr = NewtonStep(next, step, p0, s1, s2);
 
                     if (float.IsNaN(next.u1) || 
                         float.IsNaN(next.u2) || 
@@ -429,7 +424,7 @@ namespace SimpleCAD.Source.Intersections
             }
         }
 
-        private void FloodFill(Vector2 p, byte targetValue, byte replacementValue, int texRes, ref byte[] t)
+        private void FloodFill(Vector2 p, byte targetValue, byte replacementValue, int texRes, bool wrapX, bool wrapY, ref byte[] t)
         {
             var x = (int)p.X;
             var y = (int)p.Y;
@@ -440,15 +435,19 @@ namespace SimpleCAD.Source.Intersections
             while (pixels.Count > 0)
             {
                 Vector2 a = pixels.Pop();
-                if (a.X < texRes && a.X >= 0 && a.Y < texRes && a.Y >= 0)
+                
+                if (((a.X < texRes && a.X >= 0) || wrapX) && 
+                    ((a.Y < texRes && a.Y >= 0) || wrapY))
                 {
-                    if (t[(int)a.X + texRes * (int)a.Y] == targetValue)
+                    var xWrap = (a.X + texRes) % texRes;
+                    var yWrap = (a.Y + texRes) % texRes;
+                    if (t[(int)xWrap + texRes * (int)yWrap] == targetValue)
                     {
-                        t[(int)a.X + texRes * (int)a.Y] = replacementValue;
-                        pixels.Push(new Vector2(a.X - 1, a.Y));
-                        pixels.Push(new Vector2(a.X + 1, a.Y));
-                        pixels.Push(new Vector2(a.X, a.Y - 1));
-                        pixels.Push(new Vector2(a.X, a.Y + 1));
+                        t[(int)xWrap + texRes * (int)yWrap] = replacementValue;
+                        pixels.Push(new Vector2(xWrap - 1, yWrap));
+                        pixels.Push(new Vector2(xWrap + 1, yWrap));
+                        pixels.Push(new Vector2(xWrap, yWrap - 1));
+                        pixels.Push(new Vector2(xWrap, yWrap + 1));
                     }
                 }
             }
@@ -473,12 +472,12 @@ namespace SimpleCAD.Source.Intersections
                 var from2 = parameters[p - 1].SecondScaled(s2.RangeU, s2.RangeV);
                 var to1 = parameters[p].FirstScaled(s1.RangeU, s1.RangeV);
                 var to2 = parameters[p].SecondScaled(s2.RangeU, s2.RangeV);
-                Bresenham(from1, to1, 128, texRes, ref t1, s1.WrapU, s1.WrapV);
-                Bresenham(from2, to2, 128, texRes, ref t2, s2.WrapU, s2.WrapV);
+                Bresenham(from1, to1, 255, texRes, ref t1, s1.WrapU, s1.WrapV);
+                Bresenham(from2, to2, 255, texRes, ref t2, s2.WrapU, s2.WrapV);
             }
 
-            FloodFill(Vector2.Zero, 0, 255, texRes, ref t1);
-            FloodFill(Vector2.Zero, 0, 255, texRes, ref t2);
+            FloodFill(Vector2.Zero, 0, 255, texRes, s1.WrapU, s1.WrapV, ref t1);
+            FloodFill(Vector2.Zero, 0, 255, texRes, s2.WrapU, s2.WrapV, ref t2);
 
             return (t1, t2);
         }
