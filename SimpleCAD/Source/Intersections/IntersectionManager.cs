@@ -5,7 +5,7 @@ namespace SimpleCAD.Source.Intersections
 {
     public class IntersectionManager
     {
-        private const float START_PRECISION = 0.0075f;
+        private const float START_PRECISION = 0.05f;
         private const float NEWTON_PRECISION = 0.001f;
         private const float GRADIENT_STEP = 0.02f;
         private const int SUBDIV_ITERATIONS = 6;
@@ -91,7 +91,7 @@ namespace SimpleCAD.Source.Intersections
             float incrU2 = s2.RangeU;
             float incrV2 = s2.RangeV;
 
-            while (it < SUBDIV_ITERATIONS && minDist > START_PRECISION)
+            while (it < SUBDIV_ITERATIONS)
             {
                 var currMin = bestMin;
 
@@ -159,7 +159,7 @@ namespace SimpleCAD.Source.Intersections
             var currentDist = float.MaxValue;
             var current = start;
            
-            while (it < GRADIENT_ITERATIONS && currentDist > START_PRECISION)
+            while (it < GRADIENT_ITERATIONS)
             {
                 var S1 = s1.Sample(current.u1, current.v1);
                 var S2 = s2.Sample(current.u2, current.v2);
@@ -178,6 +178,7 @@ namespace SimpleCAD.Source.Intersections
                 it++;
             }
 
+            current.Clamp(s1, s2);
             solution = current;
             return lastDist <= START_PRECISION;
         }
