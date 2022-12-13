@@ -4,6 +4,7 @@ using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
 using System;
 using System.Collections.Generic;
+using System.Drawing;
 
 namespace SimpleCAD.Source.Environment
 {
@@ -18,7 +19,8 @@ namespace SimpleCAD.Source.Environment
         public float FarZ => _farZ;
         public float FOV => _fov;
         public float Aspect => _aspect;
-        public Vector2 Viewport => new Vector2(_width, _height);
+
+        public Rectangle Viewport => new Rectangle(0, 0, (int)_width, (int)_height);
 
         private float _width, _height;
         private Vector3 _pos;
@@ -30,6 +32,7 @@ namespace SimpleCAD.Source.Environment
         private float _focus;
         private float _eyeDistance;
         private RenderMode _renderMode;
+        private bool _refresh = true;
 
         public enum RenderMode
         {
@@ -47,15 +50,23 @@ namespace SimpleCAD.Source.Environment
 
         public void RefreshMatrices()
         {
-            viewM = Matrix4.LookAt(_pos, _target, Vector3.UnitY);
-            if (!_ortho)
+            if (_refresh)
             {
-                projectionM = Matrix4.CreatePerspectiveFieldOfView(_fov, _aspect, _nearZ, _farZ);
+                viewM = Matrix4.LookAt(_pos, _target, Vector3.UnitY);
+                if (!_ortho)
+                {
+                    projectionM = Matrix4.CreatePerspectiveFieldOfView(_fov, _aspect, _nearZ, _farZ);
+                }
+                else
+                {
+                    projectionM = Matrix4.CreateOrthographic(_aspect * _fov * 20, _fov * 20, _nearZ, _farZ);
+                }
             }
-            else
-            {
-                projectionM = Matrix4.CreateOrthographic(_aspect * _fov * 20, _fov * 20, _nearZ, _farZ);
-            }
+        }
+
+        public void ToggleRefresh(bool refresh)
+        {
+            _refresh = refresh;
         }
 
         public void ChangeViewportConfig(float fov, float nearZ, float farZ, bool ortho)
@@ -119,6 +130,20 @@ namespace SimpleCAD.Source.Environment
             foreach (var instance in instanced)
             {
                 instance.gizmo.RenderGizmo(instance.pos);
+            }
+        }
+
+        public void CustomRender(in List<RenderableElement> elements, Matrix4 view, Matrix4 proj)
+        {
+            var originalView = viewM;
+            var originalProj = projectionM;
+
+            viewM = view;
+            projectionM = proj;
+
+            foreach (var element in elements)
+            {
+                element.Render();
             }
         }
 

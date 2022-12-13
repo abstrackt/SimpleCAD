@@ -74,7 +74,8 @@ namespace SimpleCAD.Source.Environment
 
         public void SetIntersectTexture(byte[] pixels, int texRes)
         {
-            _texture = Texture.Load(pixels, PixelFormat.Red, texRes);
+            _texture = new Texture(PixelInternalFormat.Rgba8, PixelFormat.Red, PixelType.UnsignedByte);
+            _texture.LoadBytes(pixels, texRes, texRes);
         }
 
         public void ToggleTrimming(bool value)

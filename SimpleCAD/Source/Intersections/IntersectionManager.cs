@@ -1,5 +1,7 @@
 ﻿using OpenTK.Mathematics;
+using SimpleCAD.Source.Environment;
 using SimpleCAD.Source.Geometry;
+using SimpleCAD.Source.Utils;
 
 namespace SimpleCAD.Source.Intersections
 {
@@ -8,8 +10,8 @@ namespace SimpleCAD.Source.Intersections
         private const float START_PRECISION = 0.05f;
         private const float NEWTON_PRECISION = 0.001f;
         private const float GRADIENT_STEP = 0.02f;
-        private const int SUBDIV_ITERATIONS = 6;
-        private const int CURSOR_ITERATIONS = 20;
+        private const int SUBDIV_ITERATIONS = 100;
+        private const int CURSOR_ITERATIONS = 1000;
         private const int GRADIENT_ITERATIONS = 100;
         private const int NEWTON_ITERATIONS = 10;
         public const int DEFAULT_TEXTURE_RES = 512;
@@ -27,11 +29,11 @@ namespace SimpleCAD.Source.Intersections
             }
         }
 
-        public bool TryFindIntersection(IParametricSurface s1, IParametricSurface s2, out IntersectionData result)
+        public bool TryFindIntersection(IParametricSurface s1, IParametricSurface s2, float normalOffset, float surfaceOffset, out IntersectionData result)
         {
-            if (TryFindStartSubdiv(s1, s2, out var sol))
+            if (TryFindStartSubdiv(s1, s2, out var sol, surfaceOffset))
             {
-                result = FindIntersection(sol, s1, s2);
+                result = FindIntersection(sol, s1, s2, normalOffset, surfaceOffset);
                 return true;
             }
             else
@@ -41,11 +43,11 @@ namespace SimpleCAD.Source.Intersections
             }
         }
 
-        public bool TryFindIntersection(IParametricSurface s1, IParametricSurface s2, Vector3 cursor, out IntersectionData result)
+        public bool TryFindIntersection(IParametricSurface s1, IParametricSurface s2, Vector3 cursor, float normalOffset, float surfaceOffset, out IntersectionData result)
         {
-            if (TryFindStart(cursor, s1, s2, out var sol))
+            if (TryFindStart(cursor, s1, s2, out var sol, surfaceOffset))
             {
-                result = FindIntersection(sol, s1, s2);
+                result = FindIntersection(sol, s1, s2, normalOffset, surfaceOffset);
                 return true;
             }
             else
@@ -55,13 +57,13 @@ namespace SimpleCAD.Source.Intersections
             }
         }
 
-        private IntersectionData FindIntersection(Solution sol, IParametricSurface s1, IParametricSurface s2)
+        private IntersectionData FindIntersection(Solution sol, IParametricSurface s1, IParametricSurface s2, float normalOffset, float surfaceOffset)
         {
-            var side1 = FindIntersectionPoints(sol, 0.02f, s1, s2, out var cycle);
+            var side1 = FindIntersectionPoints(sol, 0.02f, s1, s2, normalOffset, surfaceOffset, out var cycle);
 
             if (!cycle)
             {
-                var side2 = FindIntersectionPoints(sol, -0.02f, s1, s2, out var _);
+                var side2 = FindIntersectionPoints(sol, -0.02f, s1, s2, normalOffset, surfaceOffset, out var _);
 
                 side2.points = side2.points.GetRange(1, side2.points.Count - 1);
                 side2.points.Reverse();
@@ -77,7 +79,7 @@ namespace SimpleCAD.Source.Intersections
             return side1;
         }
 
-        private bool TryFindStartSubdiv(IParametricSurface s1, IParametricSurface s2, out Solution solution)
+        private bool TryFindStartSubdiv(IParametricSurface s1, IParametricSurface s2, out Solution solution, float surfaceOffset)
         {
             Solution min = new Solution(0, 0, 0, 0);
 
@@ -127,8 +129,8 @@ namespace SimpleCAD.Source.Intersections
                                     (minV2 + maxV2) / 2
                                     );
 
-                                var p1 = s1.Sample(sol.u1, sol.v1);
-                                var p2 = s2.Sample(sol.u2, sol.v2);
+                                var p1 = s1.Sample(sol.u1, sol.v1, surfaceOffset);
+                                var p2 = s2.Sample(sol.u2, sol.v2, surfaceOffset);
 
                                 var dist = (p2 - p1).Length;
 
@@ -146,12 +148,20 @@ namespace SimpleCAD.Source.Intersections
             }
 
             solution = bestSol;
-            return minDist <= START_PRECISION;
+
+            if (minDist <= START_PRECISION)
+            {
+                return true;
+            }
+            else
+            {
+                return TryFindStart(s2.Sample(bestSol.u2, bestSol.v2, surfaceOffset), s1, s2, out solution, surfaceOffset);
+            }
         }
 
-        private bool TryFindStart(Vector3 cursor, IParametricSurface s1, IParametricSurface s2, out Solution solution)
+        private bool TryFindStart(Vector3 startPos, IParametricSurface s1, IParametricSurface s2, out Solution solution, float surfaceOffset)
         {
-            var start = FindClosest(cursor, s1, s2);
+            var start = FindClosest(startPos, s1, s2, surfaceOffset);
 
             var it = 0;
             var step = GRADIENT_STEP;
@@ -161,8 +171,8 @@ namespace SimpleCAD.Source.Intersections
            
             while (it < GRADIENT_ITERATIONS)
             {
-                var S1 = s1.Sample(current.u1, current.v1);
-                var S2 = s2.Sample(current.u2, current.v2);
+                var S1 = s1.Sample(current.u1, current.v1, surfaceOffset);
+                var S2 = s2.Sample(current.u2, current.v2, surfaceOffset);
 
                 currentDist = (S1 - S2).Length;
 
@@ -171,7 +181,7 @@ namespace SimpleCAD.Source.Intersections
                     step /= 2;
                 }
 
-                var grad = GradientAtPoint(current, s1, s2);
+                var grad = GradientAtPoint(current, s1, s2, surfaceOffset);
                 current -= grad * step;
 
                 lastDist = currentDist;
@@ -183,37 +193,47 @@ namespace SimpleCAD.Source.Intersections
             return lastDist <= START_PRECISION;
         }
 
-        private Solution FindClosest(Vector3 pos, IParametricSurface s1, IParametricSurface s2)
+        private Solution FindClosest(Vector3 pos, IParametricSurface s1, IParametricSurface s2, float surfaceOffset)
         {
-            var bestTotalDist = float.MaxValue;
+            var bestDist = float.MaxValue;
             var bestSol = new Solution(0, 0, 0, 0);
 
             for (int u1 = 0; u1 < CURSOR_ITERATIONS; u1++)
             {
-                for (int u2 = 0; u2 < CURSOR_ITERATIONS; u2++)
+                for (int v1 = 0; v1 < CURSOR_ITERATIONS; v1++)
                 {
-                    for (int v1 = 0; v1 < CURSOR_ITERATIONS; v1++)
+                    var u1s = u1 / (float)CURSOR_ITERATIONS * s1.RangeU;
+                    var v1s = v1 / (float)CURSOR_ITERATIONS * s2.RangeV;
+                    var S1 = s1.Sample(u1s, v1s, surfaceOffset);
+
+                    var d = (pos - S1).Length;
+
+                    if (d < bestDist)
                     {
-                        for (int v2 = 0; v2 < CURSOR_ITERATIONS; v2++)
-                        {
-                            var u1s = u1 / (float)CURSOR_ITERATIONS;
-                            var v1s = v1 / (float)CURSOR_ITERATIONS;
-                            var u2s = u2 / (float)CURSOR_ITERATIONS;
-                            var v2s = v2 / (float)CURSOR_ITERATIONS;
-                            var S1 = s1.Sample(u1s, v1s);
-                            var S2 = s2.Sample(u2s, v2s);
+                        bestDist = d;
+                        bestSol.u1 = u1s;
+                        bestSol.v1 = v1s;
+                    }
+                }
+            }
 
-                            var d1 = (pos - S1).Length;
-                            var d2 = (pos - S2).Length;
+            bestDist = float.MaxValue;
 
-                            var total = d1 + d2;
+            for (int u2 = 0; u2 < CURSOR_ITERATIONS; u2++)
+            {
+                for (int v2 = 0; v2 < CURSOR_ITERATIONS; v2++)
+                {
+                    var u2s = u2 / (float)CURSOR_ITERATIONS * s2.RangeU;
+                    var v2s = v2 / (float)CURSOR_ITERATIONS * s2.RangeV;
+                    var S2 = s1.Sample(u2s, v2s, surfaceOffset);
 
-                            if (total < bestTotalDist)
-                            {
-                                bestTotalDist = total;
-                                bestSol = new Solution(u1s, v1s, u2s, v2s);
-                            }
-                        }
+                    var d = (pos - S2).Length;
+
+                    if (d < bestDist)
+                    {
+                        bestDist = d;
+                        bestSol.u2 = u2s;
+                        bestSol.v2 = v2s;
                     }
                 }
             }
@@ -221,15 +241,15 @@ namespace SimpleCAD.Source.Intersections
             return bestSol;
         }
 
-        private Solution GradientAtPoint(Solution p, IParametricSurface s1, IParametricSurface s2)
+        private Solution GradientAtPoint(Solution p, IParametricSurface s1, IParametricSurface s2, float surfaceOffset)
         {
-            var S1 = s1.Sample(p.u1, p.v1);
-            var S2 = s2.Sample(p.u2, p.v2);
+            var S1 = s1.Sample(p.u1, p.v1, surfaceOffset);
+            var S2 = s2.Sample(p.u2, p.v2, surfaceOffset);
 
-            var duS1 = s1.DerivU(p.u1, p.v1);
-            var dvS1 = s1.DerivV(p.u1, p.v1);
-            var duS2 = s2.DerivU(p.u2, p.v2);
-            var dvS2 = s2.DerivV(p.u2, p.v2);
+            var duS1 = s1.DerivU(p.u1, p.v1, surfaceOffset);
+            var dvS1 = s1.DerivV(p.u1, p.v1, surfaceOffset);
+            var duS2 = s2.DerivU(p.u2, p.v2, surfaceOffset);
+            var dvS2 = s2.DerivV(p.u2, p.v2, surfaceOffset);
 
             return new Solution(
                 (2 * S1.X * duS1.X - 2 * duS1.X * S2.X) + (2 * S1.Y * duS1.Y - 2 * duS1.Y * S2.Y) + (2 * S1.Z * duS1.Z - 2 * duS1.Z * S2.Z),
@@ -239,7 +259,7 @@ namespace SimpleCAD.Source.Intersections
             );
         }
 
-        private Solution NewtonStep(Solution p, float step, Vector3 p0, IParametricSurface s1, IParametricSurface s2)
+        private Solution NewtonStep(Solution p, float step, Vector3 p0, IParametricSurface s1, IParametricSurface s2, float surfaceOffset)
         {
             Vector4 F(Vector3 p0, Vector3 p1, Vector3 p2, Vector3 t, float step)
             {
@@ -248,20 +268,20 @@ namespace SimpleCAD.Source.Intersections
 
             var h = 0.001f;
 
-            var p1 = s1.Sample(p.u1, p.v1);
-            var p2 = s2.Sample(p.u2, p.v2);
+            var p1 = s1.Sample(p.u1, p.v1, surfaceOffset);
+            var p2 = s2.Sample(p.u2, p.v2, surfaceOffset);
 
-            var n1 = Vector3.Cross(s1.DerivU(p.u1, p.v1), s1.DerivV(p.u1, p.v1)).Normalized();
-            var n2 = Vector3.Cross(s2.DerivU(p.u2, p.v2), s2.DerivV(p.u2, p.v2)).Normalized();
+            var n1 = Vector3.Cross(s1.DerivU(p.u1, p.v1, surfaceOffset), s1.DerivV(p.u1, p.v1, surfaceOffset)).Normalized(); 
+            var n2 = Vector3.Cross(s2.DerivU(p.u2, p.v2, surfaceOffset), s2.DerivV(p.u2, p.v2, surfaceOffset)).Normalized();
 
             var t = Vector3.Cross(n1, n2).Normalized();
 
             var f = F(p0, p1, p2, t, step);
 
-            var r1 = (F(p0, s1.Sample(p.u1 + h, p.v1), p2, t, step) - f) / h;
-            var r2 = (F(p0, s1.Sample(p.u1, p.v1 + h), p2, t, step) - f) / h;
-            var r3 = (F(p0, p1, s2.Sample(p.u2 + h, p.v2), t, step) - f) / h;
-            var r4 = (F(p0, p1, s2.Sample(p.u2, p.v2 + h), t, step) - f) / h;
+            var r1 = (F(p0, s1.Sample(p.u1 + h, p.v1, surfaceOffset), p2, t, step) - f) / h;
+            var r2 = (F(p0, s1.Sample(p.u1, p.v1 + h, surfaceOffset), p2, t, step) - f) / h;
+            var r3 = (F(p0, p1, s2.Sample(p.u2 + h, p.v2, surfaceOffset), t, step) - f) / h;
+            var r4 = (F(p0, p1, s2.Sample(p.u2, p.v2 + h, surfaceOffset), t, step) - f) / h;
 
             var m = new Matrix4(r1, r2, r3, r4);
             m.Invert();
@@ -280,15 +300,19 @@ namespace SimpleCAD.Source.Intersections
         }
 
         private IntersectionData FindIntersectionPoints(
-            Solution start, float step, 
-            IParametricSurface s1, IParametricSurface s2,
+            Solution start, 
+            float step, 
+            IParametricSurface s1, 
+            IParametricSurface s2,
+            float perimeterOffset,
+            float surfaceOffset,
             out bool hasCycle)
         {
             hasCycle = false;
 
             var points = new List<Vector3>();
             var parameters = new List<Solution>();
-            var startP = s1.Sample(start.u1, start.v1);
+            var startP = s1.Sample(start.u1, start.v1, surfaceOffset);
 
             points.Add(startP);
             parameters.Add(start);
@@ -303,16 +327,20 @@ namespace SimpleCAD.Source.Intersections
 
                 var next = last;
 
-                var p0 = s1.Sample(next.u1, next.v1);
+                var p0 = s1.Sample(next.u1, next.v1, surfaceOffset);
 
                 for (int i = 0; i < NEWTON_ITERATIONS; i++)
                 {
-                    var decr = NewtonStep(next, step, p0, s1, s2);
+                    var decr = NewtonStep(next, step, p0, s1, s2, surfaceOffset);
 
                     if (float.IsNaN(next.u1) || 
                         float.IsNaN(next.u2) || 
                         float.IsNaN(next.v1) || 
-                        float.IsNaN(next.v2))
+                        float.IsNaN(next.v2) ||
+                        float.IsNaN(decr.u1) ||
+                        float.IsNaN(decr.u2) ||
+                        float.IsNaN(decr.v1) ||
+                        float.IsNaN(decr.v2))
                     {
                         // Numerical failure occured
                         return new IntersectionData()
@@ -328,13 +356,13 @@ namespace SimpleCAD.Source.Intersections
                     {
                         var clamped = next;
                         clamped.Clamp(s1, s2);
-                        var clampedP = s1.Sample(clamped.u1, clamped.v1);
+                        var clampedP = s1.Sample(clamped.u1, clamped.v1, surfaceOffset);
                         points.Add(clampedP);
                         parameters.Add(clamped);
                         break;
                     }
 
-                    if ((s1.Sample(next.u1, next.v1) - s2.Sample(next.u2, next.v2)).Length < NEWTON_PRECISION)
+                    if ((s1.Sample(next.u1, next.v1, surfaceOffset) - s2.Sample(next.u2, next.v2, surfaceOffset)).Length < NEWTON_PRECISION)
                         break;
                 }
 
@@ -345,7 +373,7 @@ namespace SimpleCAD.Source.Intersections
                     break;
                 }
 
-                var nextP = s1.Sample(next.u1, next.v1);
+                var nextP = s1.Sample(next.u1, next.v1, surfaceOffset);
                 points.Add(nextP);
                 parameters.Add(next);
 
@@ -358,6 +386,22 @@ namespace SimpleCAD.Source.Intersections
                 }
 
                 last = next;
+            }
+
+            if (perimeterOffset != 0)
+            {
+                for (int i = 0; i < points.Count; i++)
+                {
+                    //Find normal for point
+                    var p = parameters[i % parameters.Count];
+
+                    var dU = s1.DerivU(p.u1, p.v1, surfaceOffset).Normalized();
+                    var dV = s1.DerivV(p.u1, p.v1, surfaceOffset).Normalized();
+
+                    var n = Vector3.Cross(dU, dV);
+
+                    points[i] += n * perimeterOffset;
+                }
             }
 
             return new IntersectionData()
@@ -425,6 +469,64 @@ namespace SimpleCAD.Source.Intersections
             }
         }
 
+        private void Bresenham(Vector2 from, Vector2 to, byte value, int texRes, ref byte[,] t, bool wrapX = false, bool wrapY = false)
+        {
+            var x1 = (int)(from.X * texRes);
+            var y1 = (int)(from.Y * texRes);
+            var x2 = (int)(to.X * texRes);
+            var y2 = (int)(to.Y * texRes);
+
+            int w = x2 - x1;
+            int h = y2 - y1;
+            int dx1 = 0, dy1 = 0, dx2 = 0, dy2 = 0;
+            if (w < 0) dx1 = -1; else if (w > 0) dx1 = 1;
+            if (h < 0) dy1 = -1; else if (h > 0) dy1 = 1;
+            if (w < 0) dx2 = -1; else if (w > 0) dx2 = 1;
+            int max = Math.Abs(w);
+            int min = Math.Abs(h);
+            if (!(max > min))
+            {
+                max = Math.Abs(h);
+                min = Math.Abs(w);
+                if (h < 0) dy2 = -1; else if (h > 0) dy2 = 1;
+                dx2 = 0;
+            }
+            int n = max >> 1;
+            for (int i = 0; i <= max; i++)
+            {
+                var finalX = x1;
+                var finalY = y1;
+
+                if (wrapX)
+                {
+                    finalX = (x1 + texRes) % texRes;
+                }
+
+                if (wrapY)
+                {
+                    finalY = (y1 + texRes) % texRes;
+                }
+
+                if (finalX >= 0 && finalX < t.GetLength(0) &&
+                    finalY >= 0 && finalY < t.GetLength(1))
+                {
+                    t[finalX, finalY] = value;
+                }
+                n += min;
+                if (!(n < max))
+                {
+                    n -= max;
+                    x1 += dx1;
+                    y1 += dy1;
+                }
+                else
+                {
+                    x1 += dx2;
+                    y1 += dy2;
+                }
+            }
+        }
+
         private void FloodFill(Vector2 p, byte targetValue, byte replacementValue, int texRes, bool wrapX, bool wrapY, ref byte[] t)
         {
             var x = (int)p.X;
@@ -454,6 +556,67 @@ namespace SimpleCAD.Source.Intersections
             }
             
             return;
+        }
+
+        private void FloodFill(Vector2 p, byte targetValue, byte replacementValue, int texRes, bool wrapX, bool wrapY, ref byte[,] t)
+        {
+            var x = (int)p.X;
+            var y = (int)p.Y;
+
+            Stack<Vector2> pixels = new Stack<Vector2>();
+            pixels.Push(new Vector2(x, y));
+
+            while (pixels.Count > 0)
+            {
+                Vector2 a = pixels.Pop();
+
+                if (((a.X < texRes && a.X >= 0) || wrapX) &&
+                    ((a.Y < texRes && a.Y >= 0) || wrapY))
+                {
+                    var xWrap = (a.X + texRes) % texRes;
+                    var yWrap = (a.Y + texRes) % texRes;
+                    if (t[(int)xWrap, (int)yWrap] == targetValue)
+                    {
+                        t[(int)xWrap, (int)yWrap] = replacementValue;
+                        pixels.Push(new Vector2(xWrap - 1, yWrap));
+                        pixels.Push(new Vector2(xWrap + 1, yWrap));
+                        pixels.Push(new Vector2(xWrap, yWrap - 1));
+                        pixels.Push(new Vector2(xWrap, yWrap + 1));
+                    }
+                }
+            }
+
+            return;
+        }
+
+        public byte[,] GetIntersectTexture(
+            IParametricSurface s,
+            List<Solution> parameters,
+            bool first,
+            int texRes = DEFAULT_TEXTURE_RES)
+        {
+            var t = new byte[texRes, texRes];
+
+            for (int p = 1; p < parameters.Count; p++)
+            {
+                Vector2 from, to;
+                if (first)
+                {
+                    from = parameters[p - 1].FirstScaled(s.RangeU, s.RangeV);
+                    to = parameters[p].FirstScaled(s.RangeU, s.RangeV);
+                }
+                else
+                {
+                    from = parameters[p - 1].SecondScaled(s.RangeU, s.RangeV);
+                    to = parameters[p].SecondScaled(s.RangeU, s.RangeV);
+                }
+                
+                Bresenham(from, to, 255, texRes, ref t, s.WrapU, s.WrapV);
+            }
+
+            FloodFill(Vector2.Zero, 0, 255, texRes, s.WrapU, s.WrapV, ref t);
+
+            return t;
         }
 
         public (byte[] t1, byte[] t2) GetIntersectTexture(

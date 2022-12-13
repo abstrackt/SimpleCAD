@@ -1,7 +1,10 @@
 ﻿#version 400
+in vec4 tese_pos;
 in vec4 tese_color;
 in vec2 tese_uv;
-out vec4 color;
+
+layout (location = 0) out vec4 color;
+layout (location = 1) out float height;
 
 uniform sampler2D mask;
 uniform int trim;
@@ -18,4 +21,5 @@ void main()
 	}
 
 	color = tese_color;
+	height = tese_pos.y;
 }

@@ -6,6 +6,8 @@ uniform mat4 projection;
 
 in vec4 tesc_colors[];
 in vec2 tesc_uvs[];
+
+out vec4 tese_pos;
 out vec4 tese_color;
 out vec2 tese_uv;
 
@@ -95,6 +97,7 @@ void main() {
 
 	gl_Position = p * view * projection;
 
+	tese_pos = p;
 	tese_color = tesc_colors[0];
 	tese_uv = uv;
 }

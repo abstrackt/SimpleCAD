@@ -6,38 +6,70 @@ namespace SimpleCAD.Source.Utils
     {
         public readonly int Handle;
 
-        public static Texture Load (byte[] pixels, PixelFormat format, int size)
-        {
-            // Generate handle
-            int handle = GL.GenTexture();
+        private PixelInternalFormat _internalFormat;
+        private PixelFormat _format;
+        private PixelType _pixelType;
 
+        public Texture(PixelInternalFormat internalFormat, PixelFormat format, PixelType pixelType)
+        {
+            Handle = GL.GenTexture();
+            _internalFormat = internalFormat;
+            _format = format;
+            _pixelType = pixelType;
+        }
+
+        public Texture(int glHandle, PixelInternalFormat internalFormat, PixelFormat format, PixelType pixelType)
+        {
+            Handle = glHandle;
+            _internalFormat = internalFormat;
+            _format = format;
+            _pixelType = pixelType;
+        }
+
+        public void LoadBytes(byte[] pixels, int sizeX, int sizeY)
+        {
             // Bind the handle
             GL.ActiveTexture(TextureUnit.Texture0);
-            GL.BindTexture(TextureTarget.Texture2D, handle);
+            GL.BindTexture(TextureTarget.Texture2D, Handle);
 
             // Texture for water calculations
             GL.TexImage2D(TextureTarget.Texture2D,
                 0,
-                PixelInternalFormat.Rgba8,
-                size,
-                size,
+                _internalFormat,
+                sizeX,
+                sizeY,
                 0,
-                format,
-                PixelType.UnsignedByte,
+                _format,
+                _pixelType,
                 pixels);
 
             GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Linear);
             GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Linear);
             GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapS, (int)TextureWrapMode.ClampToEdge);
             GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapT, (int)TextureWrapMode.ClampToEdge);
-            GL.TextureStorage2D(handle, 0, SizedInternalFormat.Rgba8, size, size);
-
-            return new Texture(handle);
         }
 
-        public Texture(int glHandle)
+        public void LoadNull(int sizeX, int sizeY)
         {
-            Handle = glHandle;
+            // Bind the handle
+            GL.ActiveTexture(TextureUnit.Texture0);
+            GL.BindTexture(TextureTarget.Texture2D, Handle);
+
+            // Texture for water calculations
+            GL.TexImage2D(TextureTarget.Texture2D,
+                0,
+                _internalFormat,
+                sizeX,
+                sizeY,
+                0,
+                _format,
+                _pixelType,
+                IntPtr.Zero);
+
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Linear);
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Linear);
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapS, (int)TextureWrapMode.ClampToEdge);
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapT, (int)TextureWrapMode.ClampToEdge);
         }
 
         public void Use(TextureUnit unit)

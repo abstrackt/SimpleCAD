@@ -122,10 +122,20 @@ namespace SimpleCAD.Source.Geometry
             ImGui.DragInt("Divisions (V)", ref _tessV, 0.1f, 1, 64);
         }
 
-        public Vector3 Sample(float u, float v)
+        public Vector3 Sample(float u, float v, float surfaceOffset)
         {
+            var n = Vector3.Zero;
+
             if (WrapU)
-                u = (u + RangeU) % RangeU;
+                u = ((u % RangeU) + RangeU) % RangeU;
+
+            if (surfaceOffset != 0)
+            {
+                var du = DerivU(u, v, 0);
+                var dv = DerivV(u, v, 0);
+
+                n = Vector3.Cross(du, dv).Normalized();
+            }
 
             int patchU = (int)u;
             int patchV = (int)v;
@@ -154,27 +164,27 @@ namespace SimpleCAD.Source.Geometry
 
             Vector3 v0 = MathUtils.DeBoor(v, new List<Vector3>() { u0, u1, u2, u3 });
 
-            return v0;
+            return v0 + n * surfaceOffset;
         }
 
-        public Vector3 DerivU(float u, float v)
+        public Vector3 DerivU(float u, float v, float surfaceOffset)
         {
             var h = 0.001f;
 
-            var p1 = Sample(u, v);
-            var p2 = Sample(u + h, v);
+            var p1 = Sample(u, v, surfaceOffset);
+            var p2 = Sample(u + h, v, surfaceOffset);
 
             var d = (p2 - p1) / h;
 
             return d;
         }
 
-        public Vector3 DerivV(float u, float v)
+        public Vector3 DerivV(float u, float v, float surfaceOffset)
         {
             var h = 0.001f;
 
-            var p1 = Sample(u, v);
-            var p2 = Sample(u, v + h);
+            var p1 = Sample(u, v, surfaceOffset);
+            var p2 = Sample(u, v + h, surfaceOffset);
 
             var d = (p2 - p1) / h;
 

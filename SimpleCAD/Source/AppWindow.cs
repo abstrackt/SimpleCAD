@@ -12,6 +12,7 @@ using SimpleCAD.Source.Selection;
 using SimpleCAD.Source.Utils;
 using SimpleCAD.Source.Serialization;
 using SharpSceneSerializer;
+using SimpleCAD.Source.Paths;
 
 namespace SimpleCAD.Source
 {
@@ -197,6 +198,11 @@ namespace SimpleCAD.Source
                     Scene.Instance.camera.ChangeAnaglyphConfig(_uiState.eyeDistance, _uiState.focusDistance);
                 }
 
+                if (ImGui.Checkbox("Refresh", ref _uiState.refreshCamera))
+                {
+                    Scene.Instance.camera.ToggleRefresh(_uiState.refreshCamera);
+                }
+
                 // This should probably contain some other menu that will allow us to traverse scene hierarchy, create new objects 
 
                 ImGui.End();
@@ -332,6 +338,38 @@ namespace SimpleCAD.Source
                 ImGui.InputText("##SceneModel" + index + "I", model.name, SceneModel.MAX_NAME_LEN);
             }
             ImGui.Separator();
+        }
+
+        private void DrawMillingPanel()
+        {
+            var creator = MillingPathCreator.Instance;
+
+            if (ImGui.Begin("Milling", ImGuiWindowFlags.AlwaysVerticalScrollbar))
+            {
+                if (ImGui.Button("Generate rough path"))
+                {
+                    creator.SetUpFramebuffer(15, 15, 5);
+                    var path = creator.GenerateRoughMillingPath(1.6f);
+                    path.Save(Directory.GetCurrentDirectory(), "rough");
+                }
+
+                if (ImGui.Button("Generate perimeter path"))
+                {
+                    var path = creator.GeneratePerimeterMillingPath(1.2f);
+                    path.Save(Directory.GetCurrentDirectory(), "perimeter");
+                }
+
+                if (ImGui.Button("Generate precise path"))
+                {
+                    var path = creator.GeneratePreciseMillingPath(0.8f);
+                    path.Save(Directory.GetCurrentDirectory(), "precise");
+                }
+
+                if (creator.HeightmapHandle != default) {
+                    ImGui.Image((IntPtr)creator.HeightmapHandle, new System.Numerics.Vector2(300, 300));
+                }
+                ImGui.End();
+            }
         }
 
         private void DrawScenePanel()
@@ -602,6 +640,7 @@ namespace SimpleCAD.Source
             DrawScenePanel();
             DrawCursorPanel();
             DrawInspectorPanel();
+            DrawMillingPanel();
         }
 
         protected override void OnKeyDown(KeyboardKeyEventArgs e)
@@ -917,6 +956,7 @@ namespace SimpleCAD.Source
             public bool showControlPoints;
             public bool cylinder;
             public SurfaceType surfaceType;
+            internal bool refreshCamera;
         }
     }
 }

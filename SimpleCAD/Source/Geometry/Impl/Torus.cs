@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using ImGuiNET;
-using OpenTK;
-using OpenTK.Graphics;
+﻿using ImGuiNET;
 using OpenTK.Mathematics;
 using SharpSceneSerializer.DTOs.Enums;
 using SimpleCAD.Source.GUI;
@@ -156,8 +152,18 @@ namespace SimpleCAD.Source.Geometry
             this.color = color;
         }
 
-        public Vector3 Sample(float u, float v)
+        public Vector3 Sample(float u, float v, float surfaceOffset)
         {
+            var n = Vector3.Zero;
+
+            if (surfaceOffset != 0)
+            {
+                var du = DerivU(u, v, 0).Normalized();
+                var dv = DerivV(u, v, 0).Normalized();
+
+                n = Vector3.Cross(du, dv).Normalized();
+            }
+
             var cosSeg = Math.Cos(u * 2 * Math.PI);
             var sinSeg = Math.Sin(u * 2 * Math.PI);
 
@@ -175,27 +181,27 @@ namespace SimpleCAD.Source.Geometry
 
             pos = pos * _transform;
 
-            return pos.Xyz;
+            return pos.Xyz + n * surfaceOffset;
         }
 
-        public Vector3 DerivU(float u, float v)
+        public Vector3 DerivU(float u, float v, float surfaceOffset)
         {
             var h = 0.001f;
 
-            var p1 = Sample(u, v);
-            var p2 = Sample(u + h, v);
+            var p1 = Sample(u, v, surfaceOffset);
+            var p2 = Sample(u + h, v, surfaceOffset);
 
             var d = (p2 - p1) / h;
 
             return d;
         }
 
-        public Vector3 DerivV(float u, float v)
+        public Vector3 DerivV(float u, float v, float surfaceOffset)
         {
             var h = 0.001f;
 
-            var p1 = Sample(u, v);
-            var p2 = Sample(u, v + h);
+            var p1 = Sample(u, v, surfaceOffset);
+            var p2 = Sample(u, v + h, surfaceOffset);
 
             var d = (p2 - p1) / h;
 

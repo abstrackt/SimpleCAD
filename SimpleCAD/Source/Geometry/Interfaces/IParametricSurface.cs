@@ -9,8 +9,8 @@ namespace SimpleCAD.Source.Geometry
         public float RangeU { get; }
         public float RangeV { get; }
 
-        public Vector3 Sample(float u, float v);
-        public Vector3 DerivU(float u, float v);
-        public Vector3 DerivV(float u, float v);
+        public Vector3 Sample(float u, float v, float surfaceOffset);
+        public Vector3 DerivU(float u, float v, float surfaceOffset);
+        public Vector3 DerivV(float u, float v, float surfaceOffset);
     }
 }

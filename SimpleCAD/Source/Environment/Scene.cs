@@ -115,6 +115,48 @@ namespace SimpleCAD.Source.Environment
             return _modelDict.TryGetValue(id, out model);
         }
 
+        public bool TryFindByName(string name, out SceneModel model)
+        {
+            foreach (var point in pointModels)
+            {
+                if (point.Name.StartsWith(name))
+                {
+                    model = point;
+                    return true;
+                }
+            }
+
+            foreach (var basic in basicModels)
+            {
+                if (basic.Name.StartsWith(name))
+                {
+                    model = basic;
+                    return true;
+                }
+            }
+
+            foreach (var complex in complexModels)
+            {
+                if (complex.Name.StartsWith(name))
+                {
+                    model = complex;
+                    return true;
+                }
+            }
+
+            foreach (var intersect in intersections)
+            {
+                if (intersect.Name.StartsWith(name))
+                {
+                    model = intersect;
+                    return true;
+                }
+            }
+
+            model = default;
+            return false;
+        }
+
         public void SetBackgroundColor(Color4 bgColor)
         {
             _bgColor = bgColor;
@@ -260,7 +302,12 @@ namespace SimpleCAD.Source.Environment
             }
         }
 
-        public void SetupIntersection(SceneModel m1,SceneModel m2, bool useCursor)
+        public void SetupIntersection(SceneModel m1, SceneModel m2, bool useCursor, float normalOffset = 0f)
+        {
+            SetupIntersection(m1, m2, useCursor, out _, normalOffset);
+        }
+
+        public void SetupIntersection(SceneModel m1,SceneModel m2, bool useCursor, out IntersectionData data, float normalOffset = 0f, float surfaceOffset = 0f)
         {
             var intersections = IntersectionManager.Instance;
 
@@ -268,11 +315,22 @@ namespace SimpleCAD.Source.Environment
             bool found;
 
             if (useCursor) {
-                found = intersections.TryFindIntersection(m1.ParametricGeometry, m2.ParametricGeometry, cursorPos, out result);
+                found = intersections.TryFindIntersection(
+                    m1.ParametricGeometry, 
+                    m2.ParametricGeometry, 
+                    cursorPos, 
+                    normalOffset, 
+                    surfaceOffset, 
+                    out result);
             }
             else
             {
-                found = intersections.TryFindIntersection(m1.ParametricGeometry, m2.ParametricGeometry, out result);
+                found = intersections.TryFindIntersection(
+                    m1.ParametricGeometry,
+                    m2.ParametricGeometry, 
+                    normalOffset, 
+                    surfaceOffset, 
+                    out result);
             }
 
             if (found)
@@ -292,6 +350,8 @@ namespace SimpleCAD.Source.Environment
 
                 AddModel(model);
             }
+
+            data = result;
         }
 
         public void AddModel(GregoryPatchSceneModel model)
