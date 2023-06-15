@@ -172,86 +172,142 @@ namespace SimpleCAD.Source.Environment
             p2.Translate(pos, false);
         }
 
-        public void SetupGregoryPatch(SurfaceSceneModel s1, SurfaceSceneModel s2, SurfaceSceneModel s3)
+        public void SetupGregoryPatch(List<SurfaceSceneModel> surfs)
         {
-            // Find valid holes
-            if (s1.TryGetCorners(out var c1) && s2.TryGetCorners(out var c2) && s3.TryGetCorners(out var c3))
+            var patches = new List<SurfacePatch>();
+
+            // Extract all patches for the selected surfaces
+            foreach (var surf in surfs)
             {
-                // Common corners between s1 and s2
-                var c1c2s = c1.Where(x => c2.Contains(x)).ToList();
+                patches.AddRange(surf.Patches);
+            }
 
-                // Common corners between s2 and s3
-                var c2c3s = c2.Where(x => c3.Contains(x)).ToList();
+            if (patches.Count < 3)
+            {
+                return;
+            }
 
-                // Common corners between s2 and s3
-                var c3c1s = c3.Where(x => c1.Contains(x)).ToList();
+            foreach (var c in patches.Combinations(3))
+            {
+                var cl = c.ToList();
 
-                // Check if they only contain one common corner each
-                for (int i1 = 0; i1 < c1c2s.Count; i1++)
+                var s1 = cl[0];
+                var s2 = cl[1];
+                var s3 = cl[2];
+
+                // Find valid holes
+                if (s1.TryGetCorners(out var c1) && s2.TryGetCorners(out var c2) && s3.TryGetCorners(out var c3))
                 {
-                    for (int i2 = 0; i2 < c2c3s.Count; i2++)
+                    // Common corners between s1 and s2
+                    var c1c2s = c1.Where(x => c2.Contains(x)).ToList();
+
+                    // Common corners between s2 and s3
+                    var c2c3s = c2.Where(x => c3.Contains(x)).ToList();
+
+                    // Common corners between s2 and s3
+                    var c3c1s = c3.Where(x => c1.Contains(x)).ToList();
+
+                    // Check if they only contain one common corner each
+                    for (int i1 = 0; i1 < c1c2s.Count; i1++)
                     {
-                        for (int i3 = 0; i3 < c3c1s.Count; i3++)
+                        for (int i2 = 0; i2 < c2c3s.Count; i2++)
                         {
-                            // Check if the points always lie on the same edge within a bezier patch
-
-                            var c1c2 = c1c2s[i1];
-                            var c2c3 = c2c3s[i2];
-                            var c3c1 = c3c1s[i3];
-
-                            var i11 = c1.IndexOf(c3c1);
-                            var i12 = c1.IndexOf(c1c2);
-                            var i21 = c2.IndexOf(c1c2);
-                            var i22 = c2.IndexOf(c2c3);
-                            var i31 = c3.IndexOf(c2c3);
-                            var i32 = c3.IndexOf(c3c1);
-
-                            if ((((i11 + 1) % c1.Count) == i12 || ((i12 + 1) % c1.Count) == i11) &&
-                                (((i21 + 1) % c2.Count) == i22 || ((i22 + 1) % c2.Count) == i21) &&
-                                (((i31 + 1) % c3.Count) == i32 || ((i32 + 1) % c3.Count) == i31))
+                            for (int i3 = 0; i3 < c3c1s.Count; i3++)
                             {
-                                // Get points on borders of hole
-                                var s1c = s1.ControlPoints;
-                                var s2c = s2.ControlPoints;
-                                var s3c = s3.ControlPoints;
+                                // Check if the points always lie on the same edge within a bezier patch
 
-                                var i1s1 = s1c.IndexOf(c3c1);
-                                var i2s1 = s1c.IndexOf(c1c2);
-                                var i1s2 = s2c.IndexOf(c1c2);
-                                var i2s2 = s2c.IndexOf(c2c3);
-                                var i1s3 = s3c.IndexOf(c2c3);
-                                var i2s3 = s3c.IndexOf(c3c1);
-                                if (s1.TryGetValuesBetween(i1s1, i2s1, out var p1) &&
-                                    s2.TryGetValuesBetween(i1s2, i2s2, out var p2) &&
-                                    s3.TryGetValuesBetween(i1s3, i2s3, out var p3) &&
-                                    s1.TryGetDerivativesBetween(i1s1, i2s1, out var d1) &&
-                                    s2.TryGetDerivativesBetween(i1s2, i2s2, out var d2) &&
-                                    s3.TryGetDerivativesBetween(i1s3, i2s3, out var d3))
+                                var c1c2 = c1c2s[i1];
+                                var c2c3 = c2c3s[i2];
+                                var c3c1 = c3c1s[i3];
+
+                                var i11 = c1.IndexOf(c3c1);
+                                var i12 = c1.IndexOf(c1c2);
+                                var i21 = c2.IndexOf(c1c2);
+                                var i22 = c2.IndexOf(c2c3);
+                                var i31 = c3.IndexOf(c2c3);
+                                var i32 = c3.IndexOf(c3c1);
+
+                                if ((((i11 + 1) % c1.Count) == i12 || ((i12 + 1) % c1.Count) == i11) &&
+                                    (((i21 + 1) % c2.Count) == i22 || ((i22 + 1) % c2.Count) == i21) &&
+                                    (((i31 + 1) % c3.Count) == i32 || ((i32 + 1) % c3.Count) == i31))
                                 {
-                                    // Check if points are returned in correct order
+                                    // Get points on borders of hole
+                                    var s1c = s1.points;
+                                    var s2c = s2.points;
+                                    var s3c = s3.points;
 
-                                    if (p1[p1.Count - 1] != p2[0])
+                                    var i1s1 = s1c.IndexOf(c3c1);
+                                    var i2s1 = s1c.IndexOf(c1c2);
+                                    var i1s2 = s2c.IndexOf(c1c2);
+                                    var i2s2 = s2c.IndexOf(c2c3);
+                                    var i1s3 = s3c.IndexOf(c2c3);
+                                    var i2s3 = s3c.IndexOf(c3c1);
+                                    if (s1.TryGetValuesBetween(i1s1, i2s1, out var p1) &&
+                                        s2.TryGetValuesBetween(i1s2, i2s2, out var p2) &&
+                                        s3.TryGetValuesBetween(i1s3, i2s3, out var p3) &&
+                                        s1.TryGetDerivativesBetween(i1s1, i2s1, out var d1) &&
+                                        s2.TryGetDerivativesBetween(i1s2, i2s2, out var d2) &&
+                                        s3.TryGetDerivativesBetween(i1s3, i2s3, out var d3))
                                     {
-                                        p2.Reverse();
-                                        d2.Reverse();
-                                    }
+                                        // Find correct edge ordering (better algorithm surely exists but its just 8 cases)
+                                        
+                                        for (int o1 = 0; o1 <= 1; o1++)
+                                        {
+                                            for (int o2 = 0; o2 <= 1; o2++)
+                                            {
+                                                for (int o3 = 0; o3 <= 1; o3++)
+                                                {
+                                                    var pt1 = new List<PointSceneModel>(p1);
+                                                    var dt1 = new List<PointSceneModel>(d1);
+                                                    var pt2 = new List<PointSceneModel>(p2);
+                                                    var dt2 = new List<PointSceneModel>(d2);
+                                                    var pt3 = new List<PointSceneModel>(p3);
+                                                    var dt3 = new List<PointSceneModel>(d3);
+                                                          
+                                                    if (o1 > 0)
+                                                    {
+                                                        pt1.Reverse();
+                                                        dt1.Reverse();
+                                                    }
 
-                                    if (p3[p3.Count - 1] != p1[0])
-                                    {
-                                        p3.Reverse();
-                                        d3.Reverse();
-                                    }
+                                                    if (o2 > 0)
+                                                    {
+                                                        pt2.Reverse();
+                                                        dt2.Reverse();
+                                                    }
 
-                                    var model = new GregoryPatchSceneModel(new GregoryPatch(), "Gregory patch");
-                                    var points = new List<PointSceneModel>();
-                                    points.AddRange(p1);
-                                    points.AddRange(p2);
-                                    points.AddRange(p3);
-                                    points.AddRange(d1);
-                                    points.AddRange(d2);
-                                    points.AddRange(d3);
-                                    model.SetPoints(points, true);
-                                    AddModel(model);
+                                                    if (o3 > 0)
+                                                    {
+                                                        pt3.Reverse();
+                                                        dt3.Reverse();
+                                                    }
+
+                                                    if (pt1[pt1.Count - 1] == pt2[0] &&
+                                                        pt2[pt2.Count - 1] == pt3[0] &&
+                                                        pt3[pt3.Count - 1] == pt1[0])
+                                                    {
+                                                        p1 = pt1;
+                                                        d1 = dt1;
+                                                        p2 = pt2;
+                                                        d2 = dt2;
+                                                        p3 = pt3;
+                                                        d3 = dt3;
+                                                    }
+                                                }
+                                            }
+                                        }
+
+                                        var model = new GregoryPatchSceneModel(new GregoryPatch(), "Gregory patch");
+                                        var points = new List<PointSceneModel>();
+                                        points.AddRange(p1);
+                                        points.AddRange(p2);
+                                        points.AddRange(p3);
+                                        points.AddRange(d1);
+                                        points.AddRange(d2);
+                                        points.AddRange(d3);
+                                        model.SetPoints(points, true);
+                                        AddModel(model);
+                                    }
                                 }
                             }
                         }

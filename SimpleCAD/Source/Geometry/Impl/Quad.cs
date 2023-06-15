@@ -35,10 +35,7 @@ namespace SimpleCAD.Source.Geometry
             return (verts, indices);
         }
 
-        public bool GeometryChanged()
-        {
-            return false;
-        }
+        public bool GeometryChanged() => false;
 
         public Color4 GetColor()
         {

@@ -33,7 +33,7 @@ namespace SimpleCAD.Source.Geometry
         public abstract (int u, int v) TesselationLevel { get; }
         public bool Wrap => wrapU;
 
-        public bool GeometryChanged() => true;
+        public bool GeometryChanged() => false;
 
         public Surface(int patchesU, int patchesV, bool wrapU = false)
         {

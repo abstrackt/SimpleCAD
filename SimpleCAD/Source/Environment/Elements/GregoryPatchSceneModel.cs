@@ -7,6 +7,7 @@ namespace SimpleCAD.Source.Environment
 {
     public class GregoryPatchSceneModel : ComplexSceneModel
     {
+        private LineRenderer _lines;
         private GregoryPatch _patch;
 
         public override bool HasParametricGeometry => false;
@@ -15,6 +16,7 @@ namespace SimpleCAD.Source.Environment
         public GregoryPatchSceneModel(GregoryPatch geometry, string name) : base(geometry, name, PrimitiveType.Patches, true, false)
         {
             _patch = geometry;
+            _lines = new LineRenderer(new LineSet());
         }
 
         private void SetTesselationLevels(int u, int v)
@@ -31,6 +33,7 @@ namespace SimpleCAD.Source.Environment
             GL.BindVertexArray(_vertexArray);
             GL.PatchParameter(PatchParameterInt.PatchVertices, 20);
             GL.DrawArrays(type, 0, _vertexCount);
+            _lines.RenderLines(_patch.GetLines());
             AfterRendering();
         }
 

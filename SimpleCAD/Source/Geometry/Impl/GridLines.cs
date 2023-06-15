@@ -47,10 +47,7 @@ namespace SimpleCAD.Source.Geometry
             return (verts, indices);
         }
 
-        public bool GeometryChanged()
-        {
-            return false;
-        }
+        public bool GeometryChanged() => false;
 
         public void OnTransformChanged(Matrix4 transform)
         {

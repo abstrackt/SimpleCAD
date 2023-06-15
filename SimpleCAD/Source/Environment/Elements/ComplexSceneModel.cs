@@ -26,6 +26,8 @@ namespace SimpleCAD.Source.Environment
 
         private IControlPointGeometry _geometry;
 
+        private List<Vector3> _previousPos = new List<Vector3>();
+
         private bool _immutable;
         private bool _removePoints;
         private bool _trimZero;
@@ -91,7 +93,25 @@ namespace SimpleCAD.Source.Environment
 
         public override void Refresh()
         {
-            if (TryUpdateMeshColor() || Geometry.GeometryChanged())
+            var pointsChanged = false;
+
+            if (_previousPos.Count != _controlPoints.Count)
+            {
+                pointsChanged = true;
+            }
+            else
+            {
+                for (int i = 0; i < _controlPoints.Count; i++)
+                {
+                    if (_previousPos[i] != _controlPoints[i].Position)
+                    {
+                        pointsChanged = true;
+                        break;
+                    }
+                }
+            }
+            
+            if (TryUpdateMeshColor() || Geometry.GeometryChanged() || pointsChanged)
             {
                 List<Vector3> positions = new List<Vector3>();
 
@@ -103,6 +123,12 @@ namespace SimpleCAD.Source.Environment
                 _geometry.SetControlPoints(positions);
                 RegenMesh();
                 UpdateVirtualPoints(_geometry.GetVirtualPoints());
+            }
+
+            _previousPos.Clear();
+            for (int i = 0; i < _controlPoints.Count; i++)
+            {
+                _previousPos.Add(_controlPoints[i].Position);
             }
         }
 

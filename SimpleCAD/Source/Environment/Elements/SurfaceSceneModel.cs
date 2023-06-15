@@ -12,13 +12,132 @@ namespace SimpleCAD.Source.Environment
 {
     public class SurfacePatch
     {
-        public SurfacePatch(List<PointSceneModel> points, int u, int v)
+        public SurfacePatch(List<PointSceneModel> points, int u, int v, int size)
         {
             this.points = points;
+            this.u = u;
+            this.v = v;
+            this.size = size;
+
         }
 
         public List<PointSceneModel> points;
-        public uint u, v;
+        public readonly int u, v;
+        private readonly int size;
+
+        public bool TryGetCorners(out List<PointSceneModel> corners)
+        {
+            corners = new List<PointSceneModel>();
+
+            if (points.Count == size * size)
+            {
+                corners.Add(points[0]);
+                corners.Add(points[size - 1]);
+                corners.Add(points[size * size - 1]);
+                corners.Add(points[(size - 1) * size]);
+                return true;
+            }
+
+            return false;
+        }
+
+        public bool TryGetDerivativesBetween(int i1, int i2, out List<PointSceneModel> pts)
+        {
+            pts = new List<PointSceneModel>();
+
+            if (i2 < i1)
+            {
+                var tmp = i2;
+                i2 = i1;
+                i1 = tmp;
+            }
+
+            var i1u = i1 % size;
+            var i2u = i2 % size;
+                           
+            var i1v = i1 / size;
+            var i2v = i2 / size;
+
+            if (i1u == i2u && (i1u == 0 || i1u == size - 1))
+            {
+                if (i1u == size - 1)
+                {
+                    i1 -= 1;
+                    i2 -= 1;
+                }
+                else
+                {
+                    i1 += 1;
+                    i2 += 1;
+                }
+
+                for (int i = i1; i <= i2; i += size)
+                {
+                    pts.Add(points[i]);
+                }
+                return true;
+            }
+
+            if (i1v == i2v && (i1v == 0 || i1v == size - 1))
+            {
+                if (i1v == size - 1)
+                {
+                    i1 -= size;
+                    i2 -= size;
+                }
+                else
+                {
+                    i1 += size;
+                    i2 += size;
+                }
+
+                for (int i = i1; i <= i2; i += 1)
+                {
+                    pts.Add(points[i]);
+                }
+                return true;
+            }
+
+            return false;
+        }
+
+        public bool TryGetValuesBetween(int i1, int i2, out List<PointSceneModel> pts)
+        {
+            pts = new List<PointSceneModel>();
+
+            if (i2 < i1)
+            {
+                var tmp = i2;
+                i2 = i1;
+                i1 = tmp;
+            }
+
+            var i1u = i1 % size;
+            var i2u = i2 % size;
+                           
+            var i1v = i1 / size;
+            var i2v = i2 / size;
+
+            if (i1u == i2u)
+            {
+                for (int i = i1; i <= i2; i += size)
+                {
+                    pts.Add(points[i]);
+                }
+                return true;
+            }
+
+            if (i1v == i2v)
+            {
+                for (int i = i1; i <= i2; i += 1)
+                {
+                    pts.Add(points[i]);
+                }
+                return true;
+            }
+
+            return false;
+        }
     }
 
     public class SurfaceSceneModel : ComplexSceneModel
@@ -55,123 +174,10 @@ namespace SimpleCAD.Source.Environment
             return _surface.GenerateControlPoints(mU, mV);
         }
 
-        public bool TryGetCorners(out List<PointSceneModel> corners)
-        {
-            corners = new List<PointSceneModel>();
-
-            if (ControlPoints.Count == Surface.PointsU * Surface.PointsV && !Surface.Wrap)
-            {
-                corners.Add(ControlPoints[0]);
-                corners.Add(ControlPoints[Surface.PointsU - 1]);
-                corners.Add(ControlPoints[Surface.PointsU * Surface.PointsV - 1]);
-                corners.Add(ControlPoints[(Surface.PointsU - 1) * Surface.PointsV]);
-                return true;
-            }
-
-            return false;
-        }
         public override void ReplacePoint(PointSceneModel oldPoint, PointSceneModel newPoint)
         {
             base.ReplacePoint(oldPoint, newPoint);
             GeneratePatchData();
-        }
-
-        public bool TryGetDerivativesBetween(int i1, int i2, out List<PointSceneModel> points)
-        {
-            points = new List<PointSceneModel>();
-
-            if (i2 < i1)
-            {
-                var tmp = i2;
-                i2 = i1;
-                i1 = tmp;
-            }
-
-            var i1u = i1 % Surface.PointsU;
-            var i2u = i2 % Surface.PointsU;
-
-            var i1v = i1 / Surface.PointsU;
-            var i2v = i2 / Surface.PointsU;
-
-            if (i1u == i2u && (i1u == 0 || i1u == Surface.PointsU - 1))
-            {
-                if (i1u == Surface.PointsU - 1)
-                {
-                    i1 -= 1;
-                    i2 -= 1;
-                }
-                else
-                {
-                    i1 += 1;
-                    i2 += 1;
-                }
-
-                for (int i = i1; i <= i2; i += Surface.PointsU)
-                {
-                    points.Add(ControlPoints[i]);
-                }
-                return true;
-            }
-
-            if (i1v == i2v && (i1v == 0 || i1v == Surface.PointsV - 1))
-            {
-                if (i1v == Surface.PointsV - 1)
-                {
-                    i1 -= Surface.PointsU;
-                    i2 -= Surface.PointsU;
-                }
-                else
-                {
-                    i1 += Surface.PointsU;
-                    i2 += Surface.PointsU;
-                }
-
-                for (int i = i1; i <= i2; i += 1)
-                {
-                    points.Add(ControlPoints[i]);
-                }
-                return true;
-            }
-
-            return false;
-        }
-
-        public bool TryGetValuesBetween(int i1, int i2, out List<PointSceneModel> points)
-        {
-            points = new List<PointSceneModel>();
-
-            if (i2 < i1)
-            {
-                var tmp = i2;
-                i2 = i1;
-                i1 = tmp;
-            }
-
-            var i1u = i1 % Surface.PointsU;
-            var i2u = i2 % Surface.PointsU;
-
-            var i1v = i1 / Surface.PointsU;
-            var i2v = i2 / Surface.PointsU;
-                
-            if (i1u == i2u)
-            {
-                for (int i = i1; i <= i2; i += Surface.PointsU)
-                {
-                    points.Add(ControlPoints[i]);
-                }
-                return true;
-            }
-
-            if (i1v == i2v)
-            {
-                for (int i = i1; i <= i2; i += 1)
-                {
-                    points.Add(ControlPoints[i]);
-                }
-                return true;
-            }
-
-            return false;
         }
 
         public void GeneratePatchData()
@@ -199,7 +205,7 @@ namespace SimpleCAD.Source.Environment
                             
                         }
                     }
-                    _patches.Add(new SurfacePatch(patchPoints, patchU, patchV));
+                    _patches.Add(new SurfacePatch(patchPoints, patchU, patchV, Surface.PatchSize));
                 }
             }
         }

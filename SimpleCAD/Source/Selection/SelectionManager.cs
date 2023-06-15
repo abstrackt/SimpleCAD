@@ -39,10 +39,7 @@ namespace SimpleCAD.Source.Utils
             .ToList();
 
         public List<SurfaceSceneModel> SelectedBezierSurfaces => _selectedComplexModels
-            .Where(x => (x is SurfaceSceneModel surf) && 
-            (surf.Surface is C0BezierSurface) && 
-            surf.Surface.PatchesU == 1 && 
-            surf.Surface.PatchesV == 1)
+            .Where(x => (x is SurfaceSceneModel surf) && (surf.Surface is C0BezierSurface))
             .Cast<SurfaceSceneModel>()
             .ToList();
 
@@ -252,19 +249,6 @@ namespace SimpleCAD.Source.Utils
 
         public void DrawElementGUI()
         {
-            var bezierSurfaces = SelectedBezierSurfaces;
-
-            if (bezierSurfaces.Count == 3)
-            {
-                if (ImGui.Button("Create Gregory Patch"))
-                {
-                    Scene.Instance.SetupGregoryPatch(
-                        bezierSurfaces[0], 
-                        bezierSurfaces[1], 
-                        bezierSurfaces[2]);
-                }
-            }
-
             if (_selectedComplexModels.Count == 0)
             {
                 if (SelectedPoints.Count == 2)

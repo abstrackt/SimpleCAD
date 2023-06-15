@@ -584,6 +584,23 @@ namespace SimpleCAD.Source
                     ImGui.Separator();
                 }
 
+                var bezierSurfaces = SelectionManager.Instance.SelectedBezierSurfaces;
+
+                var totalPatches = 0;
+
+                foreach (var surf in bezierSurfaces)
+                {
+                    totalPatches += surf.Patches.Count;
+                }
+
+                if (totalPatches >= 3)
+                {
+                    if (ImGui.Button("Create Gregory Patch"))
+                    {
+                        Scene.Instance.SetupGregoryPatch(bezierSurfaces);
+                    }
+                }
+
                 if (selection.TryGetSingleSelected(out var model))
                 { 
                     model.DrawElementGUI();

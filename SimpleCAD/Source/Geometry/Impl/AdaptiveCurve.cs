@@ -24,7 +24,7 @@ namespace SimpleCAD.Source.Geometry
 
         public string TeseShader => "bezierCurve.tese";
 
-        public bool GeometryChanged() => true;
+        public bool GeometryChanged() => false;
 
         public AdaptiveCurve()
         {

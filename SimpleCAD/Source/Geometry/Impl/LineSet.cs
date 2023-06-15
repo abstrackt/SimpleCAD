@@ -53,10 +53,7 @@ namespace SimpleCAD.Source.Geometry
         }
 
         // Only changed externally
-        public bool GeometryChanged()
-        {
-            return false;
-        }
+        public bool GeometryChanged() => false;
 
         public (Vertex[] vertices, uint[] indices) GetMesh()
         {
