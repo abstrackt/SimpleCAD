@@ -1,6 +1,6 @@
 # SimpleCAD
 
-A simple CAD interface written from ground-up in C# using OpenTK and ImGUI.NET. It allows the user to create models using a variety of surfaces and figures.
+A simple CAD interface written from the ground-up in C# using OpenTK and ImGUI.NET. It allows the user to create models using a variety of surfaces and figures.
 
 Currently implemented types of objects are:
 
